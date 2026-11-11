@@ -1,0 +1,18 @@
+# Changelog
+
+All notable changes to Transcoder are documented here. Version numbers match GitHub releases (`v*` tags).
+
+## [0.1.0] — 2026-11-10
+
+The first release of Transcoder, an audio-only converter for macOS.
+
+**New**
+- Converts to MP3, AAC (M4A), Apple Lossless (M4A), FLAC, WAV, AIFF and Opus (OGG).
+- Takes audio files, folders, and the first audio track of video files.
+- Each format remembers its own bitrate, bit depth, sample rate and channels.
+- A batch queue with progress for each file, Cancel, and Reveal in Finder.
+- Tags and cover art come across. WAV and Opus keep the tags; neither has a place for a cover.
+- Never overwrites: a name already taken gets a number.
+
+**Documentation**
+- A manual and a Theory of Operation at [sevmorris.github.io/Transcoder](https://sevmorris.github.io/Transcoder/).
