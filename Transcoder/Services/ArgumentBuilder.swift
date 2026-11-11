@@ -45,8 +45,7 @@ nonisolated enum ArgumentBuilder {
         case .aac:
             return ["-c:a", "aac", "-b:a", "\(preset.bitrateKbps ?? 256)k"]
         case .opus:
-            // FFmpeg's own Opus encoder is still marked experimental.
-            return ["-c:a", "opus", "-strict", "-2", "-b:a", "\(preset.bitrateKbps ?? 128)k"]
+            return ["-c:a", "libopus", "-b:a", "\(preset.bitrateKbps ?? 128)k"]
         case .wav:
             switch depth {
             case 16: return ["-c:a", "pcm_s16le"]

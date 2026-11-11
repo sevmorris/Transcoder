@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# build-ffmpeg.sh — Build the pinned audio-only static ffmpeg/ffprobe for bundling.
+#
+# Transcoder only ever encodes audio (libmp3lame, aac, alac, flac, pcm_*,
+# libopus) and decodes video containers to reach the audio, so no video
+# encoder or GPL library is needed. Adapted from FilmStrip's recipe r5, plus
+# libopus: FFmpeg's own Opus encoder is still experimental and weaker at low
+# bitrates.
+#
+# Produces LGPL-2.1-or-later binaries: FFmpeg 9.0.2 with libmp3lame (LAME 4.0,
+# LGPL) and libopus (1.6.1, BSD-3-Clause), NO --enable-gpl / --enable-nonfree,
+# no video/image external libraries. This is
+# the Corresponding Source recipe — provenance is ours, not a third-party build.
+#
+# Written to bash 3.2 (the /bin/bash macOS ships, frozen because Apple won't ship
+# GPLv3). No mapfile/readarray, no `declare -A`, no ${var,,}, no &>>.
+#
+# Reproducible: two runs on the same toolchain produce byte-identical binaries,
+# so anyone can rebuild and check the SHA-256 against the pin in
+# Vendor/ffmpeg-manifest.env. Three things make that true — the fixed working
+# directory below (configure bakes --prefix into the binary), -ffp-contract=off,
+# and ZERO_AR_DATE=1.
+#
+# The last one is about LC_UUID. The linker derives the UUID from a hash of its
+# output, and that output includes each object file's modification time in the
+# debug map, so two otherwise identical runs differ in exactly 48 bytes: the
+# 16-byte LC_UUID plus the 32-byte ad-hoc code-signature hash in __LINKEDIT that
+# covers it. Nothing else in 21.9 MB varies. ZERO_AR_DATE=1 makes the linker
+# record those times as zero, so the UUID depends on the content alone.
+#
+# Recipes up to r2 removed LC_UUID instead, with -Wl,-no_uuid. Do not go back to
+# that: dyld refuses to load an executable without one ("missing LC_UUID load
+# command") and aborts, which is what every r2 binary does on macOS 26.7. The
+# verification gates below assert the load command is present.
+# To re-verify: run twice into different output dirs and compare SHA-256.
+#
+# Usage: scripts/build-ffmpeg.sh [output-dir]   (default: ./build/ffmpeg-audio)
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PBXPROJ="$PROJECT_DIR/Transcoder.xcodeproj/project.pbxproj"
+OUT_DIR="${1:-$PROJECT_DIR/build/ffmpeg-audio}"
+
+# --- Pinned sources (SHA-256 verified; see Vendor/README.md) --------------------
+FFMPEG_VERSION="9.0.2"
+FFMPEG_URL="https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
+FFMPEG_SHA="8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
+LAME_VERSION="4.0"
+LAME_URL="https://downloads.sourceforge.net/project/lame/lame/${LAME_VERSION}/lame-${LAME_VERSION}.tar.gz"
+LAME_SHA="3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb"
+OPUS_VERSION="1.6.1"
+OPUS_URL="https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz"
+# From xiph.org's SHA256SUMS.txt (checked against the osuosl mirror too).
+OPUS_SHA="6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1"
+
+# --- Deployment target: read from the project, assert all configs agree ---------
+# grep -m1 would silently pick one of Debug/Release × project/target; instead
+# collect the distinct values and fail if they disagree.
+dt_values="$(grep -oE 'MACOSX_DEPLOYMENT_TARGET = [0-9.]+' "$PBXPROJ" | grep -oE '[0-9]+(\.[0-9]+)?' | sort -u)"
+dt_count="$(printf '%s\n' "$dt_values" | grep -c .)"
+if [ "$dt_count" -ne 1 ]; then
+    printf 'MACOSX_DEPLOYMENT_TARGET disagrees across configs: %s\n' "$dt_values" >&2
+    exit 1
+fi
+DEPTARGET="$dt_values"
+
+# FIXED path, deliberately not mktemp. configure bakes --prefix into the binary's
+# configuration string, so a randomized working directory makes every run produce
+# a different binary — and a Corresponding Source recipe that cannot reproduce its
+# own artifact is not much of a recipe. A literal /tmp path (not $TMPDIR, which is
+# per-user on macOS) keeps the embedded string identical across machines too.
+# Cleared at start; concurrent runs of this script are not supported.
+WORK="/tmp/transcoder-ffmpeg-build"
+rm -rf "$WORK"
+mkdir -p "$WORK"
+trap 'rm -rf "$WORK"' EXIT
+mkdir -p "$OUT_DIR"
+
+# Zero the object-file timestamps the linker hashes into LC_UUID (see the
+# header). Exported so every link and archive step below inherits it.
+export ZERO_AR_DATE=1
+
+echo "▶ audio-only FFmpeg ${FFMPEG_VERSION} + LAME ${LAME_VERSION} + Opus ${OPUS_VERSION}, arm64, min macOS ${DEPTARGET}"
+
+# dl <dest> <url> <sha256>: download and verify, fail-closed on mismatch.
+dl() { curl -fL --retry 3 --retry-delay 2 -o "$1" "$2"; s="$(shasum -a 256 "$1" | awk '{print $1}')"; [ "$s" = "$3" ] || { echo "checksum mismatch $2: $s" >&2; exit 1; }; }
+
+cd "$WORK"
+dl lame.tar.gz    "$LAME_URL"   "$LAME_SHA"
+dl ffmpeg.tar.xz  "$FFMPEG_URL" "$FFMPEG_SHA"
+dl opus.tar.gz    "$OPUS_URL"   "$OPUS_SHA"
+
+CFL="-mmacosx-version-min=${DEPTARGET} -arch arm64"
+
+# --- LAME (static, encoder only) ------------------------------------------------
+echo "▶ LAME ${LAME_VERSION}"
+tar xzf lame.tar.gz
+cd "lame-${LAME_VERSION}"
+# --disable-decoder: FFmpeg only encodes with LAME. From 3.101, LAME's configure
+# links libmpg123 for decoding whenever it finds one, and a Mac with Homebrew's
+# ffmpeg or lame installed has it: the static libmp3lame then pulls in
+# /opt/homebrew/.../libmpg123, which the no-non-system-dylibs gate below refuses,
+# and the build would depend on what happens to be installed on the machine.
+CFLAGS="$CFL" LDFLAGS="$CFL" ./configure \
+    --prefix="$WORK/lame-install" --disable-shared --enable-static --disable-frontend --disable-decoder >/dev/null
+make -j"$(sysctl -n hw.ncpu)" >/dev/null
+make install >/dev/null
+cd "$WORK"
+
+# --- libopus (static) -----------------------------------------------------------
+# -ffp-contract=off for the same reproducibility reason as FFmpeg (below).
+echo "▶ Opus ${OPUS_VERSION}"
+tar xzf opus.tar.gz
+cd "opus-${OPUS_VERSION}"
+CFLAGS="$CFL -O2 -ffp-contract=off" LDFLAGS="$CFL" ./configure \
+    --prefix="$WORK/opus-install" --disable-shared --enable-static \
+    --disable-doc --disable-extra-programs >/dev/null
+make -j"$(sysctl -n hw.ncpu)" >/dev/null
+make install >/dev/null
+cd "$WORK"
+
+# configure finds libopus through pkg-config. PKG_CONFIG_LIBDIR replaces the
+# default search path, so only the libraries built here are visible — never
+# Homebrew's.
+export PKG_CONFIG_LIBDIR="$WORK/opus-install/lib/pkgconfig"
+
+# --- FFmpeg (static, audio-only, LGPL) ------------------------------------------
+echo "▶ FFmpeg ${FFMPEG_VERSION}"
+tar xf ffmpeg.tar.xz
+cd "ffmpeg-${FFMPEG_VERSION}"
+./configure \
+    --prefix="$WORK/ffmpeg-install" \
+    --cc=/usr/bin/clang --arch=arm64 \
+    --extra-cflags="-mmacosx-version-min=${DEPTARGET} -fno-stack-check -ffp-contract=off -I$WORK/lame-install/include" \
+    --extra-ldflags="-mmacosx-version-min=${DEPTARGET} -L$WORK/lame-install/lib" \
+    --enable-static --disable-shared --pkg-config-flags=--static \
+    --enable-libmp3lame \
+    --enable-libopus \
+    --disable-autodetect \
+    --enable-zlib \
+    --disable-ffplay \
+    --enable-neon --enable-runtime-cpudetect >/dev/null
+# -fno-stack-check: macOS clang enables -fstack-check by default; it breaks
+# FFmpeg's codegen. Carried unconditionally — an input-dependent codegen bug is
+# not something a parity corpus can clear, so this is never dropped on a passing run.
+#
+# -ffp-contract=off: build reproducibility. Clang contracts a*b+c into FMA by
+# default, and the contraction it chooses varies with compiler version. Inside a
+# recursive IIR biquad (highpass, allpass) that difference accumulates through the
+# feedback path, so the SAME source compiled by two clang versions produces
+# measurably different audio. Disabling contraction makes the filter output depend
+# on the source alone, not on which toolchain built it. Keep this flag on any
+# FFmpeg version — it is not tied to a particular release or a one-off comparison.
+#
+# Evidence (2026-07, clang 13.1.6 vs 17.0.0): with contraction on, highpass nulled
+# at -84.29 dBFS and allpass at -90.31 dBFS; with it off both null at -inf, and
+# decoded-PCM MD5s match across the whole corpus. No throughput cost measured
+# (0.53s vs 0.53s, 5x a 20s file).
+make -j"$(sysctl -n hw.ncpu)" >/dev/null
+make install >/dev/null
+
+BIN="$WORK/ffmpeg-install/bin"
+
+# --- Verification gates (fail-closed) -------------------------------------------
+echo "▶ verifying"
+# The binary must actually RUN before any grep-based check means anything: if it
+# cannot execute (e.g. a missing dylib), cfg is empty and every "flag absent"
+# assertion passes vacuously. Assert execution first.
+"$BIN/ffmpeg" -hide_banner -version >/dev/null 2>&1 || { echo "FAIL: built ffmpeg does not execute" >&2; exit 1; }
+cfg="$("$BIN/ffmpeg" -hide_banner -version | grep '^configuration:')"
+[ -n "$cfg" ] || { echo "FAIL: no configuration string from built ffmpeg" >&2; exit 1; }
+# No non-system dynamic dependencies. --disable-autodetect stops configure from
+# silently linking whatever happens to be installed on the build machine (a
+# Homebrew libxcb/X11 chain got linked this way and made the signed binary
+# fail to load on any machine without that exact Homebrew build).
+for b in ffmpeg ffprobe; do
+    extern="$(otool -L "$BIN/$b" | tail -n +2 | grep -vE '/usr/lib/|/System/Library/' || true)"
+    [ -z "$extern" ] || { echo "FAIL: $b has non-system dynamic deps:" >&2; echo "$extern" >&2; exit 1; }
+done
+for bad in enable-gpl enable-nonfree enable-version3; do
+    printf '%s' "$cfg" | grep -q -- "--$bad" && { echo "FAIL: --$bad present" >&2; exit 1; }
+done
+printf '%s' "$cfg" | grep -q -- '--enable-libmp3lame' || { echo "FAIL: libmp3lame missing" >&2; exit 1; }
+printf '%s' "$cfg" | grep -q -- '--enable-libopus' || { echo "FAIL: libopus missing" >&2; exit 1; }
+minos="$(otool -l "$BIN/ffmpeg" | awk '/LC_BUILD_VERSION/{f=1} f&&/minos/{print $2; exit}')"
+[ "$minos" = "$DEPTARGET" ] || { echo "FAIL: minos $minos != $DEPTARGET" >&2; exit 1; }
+# Asserted separately from the execution gate above: a dyld that still accepts
+# a binary without LC_UUID would let one through there.
+for b in ffmpeg ffprobe; do
+    otool -l "$BIN/$b" | grep -q 'cmd LC_UUID' || { echo "FAIL: $b has no LC_UUID" >&2; exit 1; }
+done
+
+cp "$BIN/ffmpeg" "$BIN/ffprobe" "$OUT_DIR/"
+echo "✓ $(du -h "$OUT_DIR/ffmpeg" | cut -f1) ffmpeg, $(du -h "$OUT_DIR/ffprobe" | cut -f1) ffprobe → $OUT_DIR"
+echo "  license: $(printf '%s' "$cfg" >/dev/null; "$BIN/ffmpeg" -hide_banner -L 2>/dev/null | head -1)"
+shasum -a 256 "$OUT_DIR/ffmpeg" "$OUT_DIR/ffprobe"
