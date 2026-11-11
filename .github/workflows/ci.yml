@@ -1,0 +1,60 @@
+name: CI
+
+# Ported from FilmStrip's ci.yml. Transcoder's ConversionTests run the bundled
+# FFmpeg to every output format, so a binary dyld refuses fails the test step
+# itself; no separate pipeline smoke step is needed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# repo-standards' ci-cancel: a new push to a pull request cancels the run before it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  lint-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: shellcheck the bash scripts
+        run: shellcheck scripts/*.sh
+
+  build-and-test:
+    # The sibling matrix (repo-standards' ci-matrix): the oldest macOS GitHub
+    # still tests, the current one, and Xcode 27, the toolchain releases use.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            xcode: '26.3'
+          - os: macos-26
+            xcode: '26.3'
+          - os: xcode-27
+            xcode: '27.0'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ matrix.xcode }}
+
+      - name: Fetch FFmpeg
+        # Before xcodebuild, so the synced group sees the binaries when the
+        # build is planned (see Vendor/README.md).
+        run: ./scripts/fetch-ffmpeg.sh
+
+      - name: Build and test
+        timeout-minutes: 15
+        run: |
+          xcodebuild \
+            -project Transcoder.xcodeproj \
+            -scheme Transcoder \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            test
