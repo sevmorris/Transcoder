@@ -440,7 +440,7 @@
   <!-- Hero -->
   <div class="hero" id="overview">
     <h1>Transcoder</h1>
-    <p>Convert audio on the Mac. Drop files in, pick MP3, AAC, Apple Lossless, FLAC, WAV, AIFF or Opus, and convert. From a video file Transcoder takes the first audio track and writes nothing else. Tags and cover art come with it.</p>
+    <p>Transcoder converts audio files on a Mac. It writes MP3, AAC, Apple Lossless, FLAC, WAV, AIFF and Opus. From a video file, it writes only the first audio track. It copies the tags and the cover art.</p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-v0.1.0.dmg">Download v0.1.0</a>
       <a class="btn btn-secondary" href="https://github.com/sevmorris/Transcoder">GitHub</a>
@@ -449,8 +449,8 @@
   </div>
 
   <figure class="shot">
-    <img src="../screenshots/tc-done.png" width="1800" height="984" alt="Transcoder's window: a queue of five finished conversions on the left, the MP3 settings on the right">
-    <figcaption>A finished batch. Each row names the file it wrote; the magnifier reveals it in Finder.</figcaption>
+    <img src="../screenshots/tc-done.png" width="1800" height="984" alt="The Transcoder window: five completed rows in the queue on the left, the MP3 settings in the settings pane on the right">
+    <figcaption>A completed batch. Each row shows the name of its output file.</figcaption>
   </figure>
 
   <!-- Getting Started -->
@@ -459,244 +459,313 @@
 
     <h3>System Requirements</h3>
     <ul>
-      <li>macOS 15.0 (Sequoia) or later</li>
-      <li>A Mac with Apple Silicon. Transcoder and its FFmpeg are built for arm64 only, so an Intel Mac cannot run it.</li>
-      <li>FFmpeg and ffprobe are inside the app; there is nothing else to install</li>
-      <li>Free and open source (MIT)</li>
+      <li>macOS 15.0 (Sequoia) or later.</li>
+      <li>A Mac with Apple Silicon. Transcoder does not operate on a Mac with an Intel processor.</li>
+      <li>No other software. FFmpeg and ffprobe are in the app.</li>
+      <li>Transcoder is free and open source (MIT licence).</li>
     </ul>
 
-    <h3>Installation</h3>
+    <h3>Install Transcoder</h3>
     <ol>
-      <li>Download the DMG from the link above</li>
-      <li>Open it and drag <strong>Transcoder</strong> to the Applications folder</li>
-      <li>Open Transcoder from Applications. Run it from there rather than from the disk image or the Downloads folder, so it can <a href="#updates">update itself</a>.</li>
+      <li>Download the DMG file. Use the link at the top of this page.</li>
+      <li>Open the DMG file.</li>
+      <li>Drag <strong>Transcoder</strong> to the Applications folder.</li>
+      <li>Open Transcoder from the Applications folder.</li>
     </ol>
+    <div class="callout">
+      <strong>Note</strong>
+      Open Transcoder from the Applications folder, not from the DMG or the Downloads folder. If you do not, Transcoder cannot <a href="#updates">update itself</a>.
+    </div>
 
-    <h3>Quick Start</h3>
+    <h3>Convert Files</h3>
     <ol>
-      <li>Drop audio files, video files or folders onto the window, or click <strong>Choose Files…</strong></li>
-      <li>Pick an output format and its settings on the right</li>
-      <li>Click <strong>Convert</strong> in the toolbar, or press <kbd>⌘</kbd><kbd>↩</kbd></li>
-      <li>Each new file is written beside its source, unless you chose a folder under <a href="#save-to">Save To</a></li>
+      <li>Drag audio files, video files or folders onto the Transcoder window.</li>
+      <li>Select the output format in the <strong>Format</strong> menu.</li>
+      <li>Set the other settings in the settings pane, if necessary.</li>
+      <li>Click the <strong>Convert</strong> button, or push <kbd>⌘</kbd><kbd>↩</kbd>.</li>
     </ol>
+    <p>Transcoder writes each output file in the same folder as its source file. To use a different folder, see <a href="#save-to">Save To</a>.</p>
   </section>
 
   <!-- Interface -->
   <section id="interface">
     <h2>The Interface</h2>
-    <p>One window, in two parts: the queue on the left and the settings on the right.</p>
+    <p>The Transcoder window has two parts. The queue is on the left. The settings pane is on the right.</p>
 
     <figure class="shot">
-      <img src="../screenshots/tc-idle.png" width="1800" height="984" alt="Transcoder with an empty queue: a drop target reading Drop audio or video files here, and a Choose Files button">
-      <figcaption>An empty queue is a drop target.</figcaption>
+      <img src="../screenshots/tc-idle.png" width="1800" height="984" alt="The Transcoder window with an empty queue and the Choose Files button">
+      <figcaption>An empty queue. Drag files onto it, or click the Choose Files… button.</figcaption>
     </figure>
 
     <h3>Queue</h3>
-    <p>Every file you add gets a row: its name, and below it what is happening to it — <em>Waiting</em>, a progress bar, the name of the file it wrote, the reason it failed, or <em>Cancelled</em>. The button at the end of a row removes a waiting file, or reveals a finished one in Finder. Right-click a row for <strong>Reveal in Finder</strong> and <strong>Remove</strong>.</p>
+    <p>The queue has one row for each file. A row shows the name of the source file. Below the name, the row shows the status of the file. See <a href="#queue">Row Status</a>.</p>
+    <p>At the end of the row there is one button:</p>
+    <ul>
+      <li>The <strong>remove</strong> button (−) removes a file that is waiting.</li>
+      <li>The <strong>magnifier</strong> button shows a completed output file in Finder.</li>
+    </ul>
+    <p>Right-click a row to see the same commands: <strong>Reveal in Finder</strong> and <strong>Remove</strong>.</p>
 
-    <h3>Settings</h3>
-    <p>The right-hand pane holds the output format and its settings, where the files go, and a note on whether the chosen format keeps cover art. It is locked while a batch runs. See <a href="#presets">Format Settings</a> and <a href="#save-to">Save To</a>.</p>
+    <h3>Settings Pane</h3>
+    <p>The settings pane has the output format, the format settings and the output folder. A note at the bottom tells you if the format can hold cover art. You cannot change the settings while Transcoder converts files.</p>
 
     <h3>Toolbar</h3>
     <div class="table-wrap">
-    <table class="settings-table">
+    <table class="settings-table wrap">
       <thead>
-        <tr><th>Button</th><th>Shortcut</th><th>What it does</th></tr>
+        <tr><th>Button</th><th>Key</th><th>Function</th></tr>
       </thead>
       <tbody>
-        <tr><td>Add Files</td><td>⌘O</td><td>Opens a panel to choose files or folders. Also <strong>File › Add Files…</strong></td></tr>
-        <tr><td>Clear Finished</td><td></td><td>Removes every row that is done, failed or cancelled. Waiting files stay. Unavailable while a batch runs.</td></tr>
-        <tr><td>Reveal in Finder</td><td></td><td>Opens Finder with every file this queue has written selected.</td></tr>
-        <tr><td>Convert</td><td>⌘↩</td><td>Converts every waiting file, one after another. While a batch runs, this button is <strong>Cancel</strong>.</td></tr>
+        <tr><td>Add Files (+)</td><td>⌘O</td><td>Opens a panel. In the panel, select files or folders. The menu command <strong>File › Add Files…</strong> does the same.</td></tr>
+        <tr><td>Clear Finished</td><td></td><td>Removes all rows that are completed, failed or cancelled. Rows that are waiting stay in the queue.</td></tr>
+        <tr><td>Reveal in Finder</td><td></td><td>Shows all output files of the queue in Finder.</td></tr>
+        <tr><td>Convert</td><td>⌘↩</td><td>Converts all files that are waiting. While Transcoder converts files, this button changes to <strong>Cancel</strong>.</td></tr>
       </tbody>
     </table>
     </div>
 
     <h3>Help Menu</h3>
     <ul>
-      <li><strong>Transcoder Help</strong> (<kbd>⌘</kbd><kbd>?</kbd>) — a short summary sheet in the app</li>
-      <li><strong>Check for Updates…</strong> — asks GitHub for a newer release now (see <a href="#updates">Updates</a>)</li>
-      <li><strong>Report an Issue…</strong> — opens a new issue on GitHub</li>
+      <li><strong>Transcoder Help</strong> (<kbd>⌘</kbd><kbd>?</kbd>) shows a short summary of how to use Transcoder.</li>
+      <li><strong>Check for Updates…</strong> looks for a new version now. See <a href="#updates">Updates</a>.</li>
+      <li><strong>Report an Issue…</strong> opens a new issue on GitHub.</li>
     </ul>
   </section>
 
   <!-- Adding Files -->
   <section id="adding-files">
     <h2>Adding Files</h2>
-    <p>Two ways in, and both take files and folders together:</p>
-    <ul>
-      <li><strong>Drag and drop</strong> anywhere on the window. The queue tints while something is held over it.</li>
-      <li><strong>The open panel</strong>: <strong>Choose Files…</strong> in an empty queue, the <strong>+</strong> toolbar button, or <kbd>⌘</kbd><kbd>O</kbd>. Select as many files and folders as you like.</li>
-    </ul>
+    <p>You can add files and folders in two ways.</p>
+
+    <h3>Drag Files onto the Window</h3>
+    <ol>
+      <li>Select the files or folders in Finder.</li>
+      <li>Drag them onto the Transcoder window.</li>
+    </ol>
+    <p>The queue changes colour when you hold files above it.</p>
+
+    <h3>Use the Open Panel</h3>
+    <ol>
+      <li>Click the <strong>Add Files</strong> button (+), or push <kbd>⌘</kbd><kbd>O</kbd>. If the queue is empty, you can also click the <strong>Choose Files…</strong> button.</li>
+      <li>Select one or more files or folders.</li>
+      <li>Click <strong>Open</strong>.</li>
+    </ol>
 
     <figure class="shot">
-      <img src="../screenshots/tc-queue.png" width="1800" height="984" alt="Five files waiting in the queue">
-      <figcaption>Five files waiting: AIFF, FLAC, Apple Lossless, MP3 and WAV sources, all bound for MP3.</figcaption>
+      <img src="../screenshots/tc-queue.png" width="1800" height="984" alt="Five files that wait in the queue">
+      <figcaption>Five files wait in the queue. The source files are AIFF, FLAC, Apple Lossless, MP3 and WAV.</figcaption>
     </figure>
 
-    <h3>What Is Accepted</h3>
-    <p>A file is added when macOS recognises its extension as audio or video — MP3, M4A, WAV, AIFF, FLAC, Ogg and Opus, MOV, MP4 and M4V among them. Anything else is passed over without a message. Adding the same file twice adds it once.</p>
-    <p>A folder is searched all the way down, skipping hidden files, and its media files are queued in order of their path.</p>
+    <h3>Files That Transcoder Accepts</h3>
+    <p>Transcoder accepts a file if macOS identifies its extension as audio or video. Some examples are MP3, M4A, WAV, AIFF, FLAC, Ogg, Opus, MOV, MP4 and M4V. Transcoder ignores all other files and does not show a message. If you add the same file two times, the queue shows it one time.</p>
+    <p>When you add a folder, Transcoder looks in the folder and in all its subfolders. It ignores hidden files. It adds the files in the alphabetical order of their paths.</p>
 
     <div class="callout">
       <strong>Video files</strong>
-      Transcoder never writes video. From a movie it takes the <em>first</em> audio track and ignores the rest, so a file with several languages or a commentary track gives you whichever comes first. A file with no audio at all fails with <em>The file has no audio.</em>
+      Transcoder does not write video. From a video file, it writes only the first audio track. It ignores all other audio tracks, for example other languages or a commentary. If a file has no audio, the conversion fails with the message <em>The file has no audio.</em>
     </div>
   </section>
 
   <!-- Output Formats -->
   <section id="formats">
     <h2>Output Formats</h2>
-    <p>One format applies to the whole batch. Choose it with <strong>Format</strong> at the top of the settings.</p>
+    <p>Transcoder uses one output format for all files in a batch. Select the format in the <strong>Format</strong> menu at the top of the settings pane.</p>
 
     <div class="table-wrap">
     <table class="formats-table">
       <thead>
-        <tr><th>Extension</th><th>Format</th><th>Notes</th></tr>
+        <tr><th>Extension</th><th>Format</th><th>Description</th></tr>
       </thead>
       <tbody>
-        <tr><td>.mp3</td><td>MP3</td><td>Lossy, plays everywhere. Encoded with LAME. Tags as ID3v2.3, plus an ID3v1 tag for old players.</td></tr>
-        <tr><td>.m4a</td><td>AAC (M4A)</td><td>Lossy, the Apple Music and iTunes Store format. Smaller than MP3 for the same quality. Encoded with FFmpeg's own AAC encoder.</td></tr>
-        <tr><td>.m4a</td><td>Apple Lossless (M4A)</td><td>Lossless, compressed to about half the size of WAV. Plays in Music, on iPhone and iPad.</td></tr>
-        <tr><td>.flac</td><td>FLAC</td><td>Lossless and open, the usual archive and download format outside Apple's world.</td></tr>
-        <tr><td>.wav</td><td>WAV</td><td>Uncompressed PCM, the safest file to hand to an editor or a DAW. Keeps tags, but no cover art.</td></tr>
-        <tr><td>.aiff</td><td>AIFF</td><td>Uncompressed PCM, Apple's equivalent of WAV. Tags and cover art as ID3.</td></tr>
-        <tr><td>.opus</td><td>Opus (OGG)</td><td>Lossy, the most efficient of the three: good speech at 48 kbps, transparent music well below MP3's bitrates. Always 48 kHz. Encoded with libopus. Keeps tags, but no cover art.</td></tr>
+        <tr><td>.mp3</td><td>MP3</td><td>Lossy. Almost all players can play it. The encoder is LAME. The tags are ID3v2.3, with an ID3v1 tag for old players.</td></tr>
+        <tr><td>.m4a</td><td>AAC (M4A)</td><td>Lossy. This is the format of Apple Music. At the same quality, the file is smaller than MP3. The encoder is the AAC encoder of FFmpeg.</td></tr>
+        <tr><td>.m4a</td><td>Apple Lossless (M4A)</td><td>Lossless. The file is approximately half the size of WAV. Music, iPhone and iPad can play it.</td></tr>
+        <tr><td>.flac</td><td>FLAC</td><td>Lossless and open. Many archives and download stores use it.</td></tr>
+        <tr><td>.wav</td><td>WAV</td><td>Uncompressed PCM. Use it for audio editors. It keeps the tags, but not the cover art.</td></tr>
+        <tr><td>.aiff</td><td>AIFF</td><td>Uncompressed PCM, the Apple equivalent of WAV. The tags and the cover art are ID3.</td></tr>
+        <tr><td>.opus</td><td>Opus (OGG)</td><td>Lossy. Of the three lossy formats, Opus gives the best quality at a low bitrate. Speech is good at 48 kbps. The sample rate is always 48 kHz. The encoder is libopus. It keeps the tags, but not the cover art.</td></tr>
       </tbody>
     </table>
     </div>
 
     <div class="callout">
       <strong>Lossy to lossy</strong>
-      Every lossy encode throws something away, and re-encoding an MP3 as AAC or Opus throws away more on top. Converting a lossy file to a lossless format keeps exactly what it has but cannot bring back what was lost. Start from the best source you have. See <a href="../theory.html#generations">Generations and Headroom</a>.
+      A lossy encoder removes some audio data. If you convert a lossy file to a different lossy format, the encoder removes more data. If you convert a lossy file to a lossless format, the result keeps all the data of the lossy file, but it does not replace the data that was removed. Always use the best source file that you have. See <a href="../theory.html#generations">Generations and Headroom</a>.
     </div>
   </section>
 
   <!-- Presets -->
   <section id="presets">
     <h2>Format Settings</h2>
-    <p>Each format remembers its own settings — switch from MP3 to FLAC and back, and MP3 still has the bitrate you left it at. They are kept between launches, along with the chosen format and the <a href="#save-to">Save To</a> folder. <strong>Reset to Defaults</strong> puts the current format back to its defaults.</p>
+    <p>Each format has its own settings. Transcoder keeps the settings of each format. For example, if you change from MP3 to FLAC and back to MP3, the MP3 bitrate does not change. Transcoder also keeps the format and the output folder when you quit.</p>
 
     <div class="shot-pair">
       <figure class="shot">
-        <img src="../screenshots/tc-wav-panel.png" width="560" height="984" alt="Settings for WAV: bit depth 24-bit, sample rate and channels same as source">
-        <figcaption>A lossless format: bit depth instead of bitrate.</figcaption>
+        <img src="../screenshots/tc-wav-panel.png" width="560" height="984" alt="Settings for WAV: Bit depth 24-bit, Sample rate and Channels Same as source">
+        <figcaption>A lossless format has a Bit depth menu, not a Bitrate menu.</figcaption>
       </figure>
       <figure class="shot">
-        <img src="../screenshots/tc-opus-panel.png" width="560" height="984" alt="Settings for Opus: bitrate 128 kbps, sample rate fixed at 48 kHz">
-        <figcaption>Opus: the sample rate is fixed at 48 kHz.</figcaption>
+        <img src="../screenshots/tc-opus-panel.png" width="560" height="984" alt="Settings for Opus: Bitrate 128 kbps, Sample rate 48 kHz">
+        <figcaption>For Opus, the sample rate is always 48 kHz.</figcaption>
       </figure>
     </div>
 
     <div class="table-wrap">
-    <table class="settings-table">
+    <table class="settings-table wrap">
       <thead>
-        <tr><th>Setting</th><th>Formats</th><th>Choices</th></tr>
+        <tr><th>Menu</th><th>Formats</th><th>Values</th></tr>
       </thead>
       <tbody>
         <tr>
           <td>Bitrate</td>
           <td>MP3, AAC, Opus</td>
-          <td>MP3: 96, 128, 160, 192, 224, 256, 320 kbps (default 320).<br>AAC: 96, 128, 160, 192, 256, 320 kbps (default 256).<br>Opus: 48, 64, 96, 128, 160, 192, 256 kbps (default 128).<br>MP3 and AAC aim at the bitrate throughout; Opus varies around it, as libopus does by default.</td>
+          <td>MP3: 96, 128, 160, 192, 224, 256, 320 kbps (default 320).<br>AAC: 96, 128, 160, 192, 256, 320 kbps (default 256).<br>Opus: 48, 64, 96, 128, 160, 192, 256 kbps (default 128).<br>MP3 and AAC use the bitrate for all of the file. Opus changes the bitrate a small quantity above and below the value.</td>
         </tr>
         <tr>
           <td>Bit depth</td>
-          <td>WAV, AIFF, FLAC, ALAC</td>
-          <td>16-bit or 24-bit (default 24). WAV also offers 32-bit float.</td>
+          <td>WAV, AIFF, FLAC, Apple Lossless</td>
+          <td>16-bit or 24-bit (default 24). WAV also has 32-bit float.</td>
         </tr>
         <tr>
           <td>Sample rate</td>
-          <td>All but Opus</td>
-          <td>Same as source (default), or 44.1, 48, 88.2, 96 kHz. MP3 offers 32, 44.1 and 48 kHz, the rates it is defined for. Opus is always 48 kHz.</td>
+          <td>All formats, but not Opus</td>
+          <td>Same as source (default), 44.1, 48, 88.2 or 96 kHz. For MP3: Same as source, 32, 44.1 or 48 kHz. Opus is always 48 kHz.</td>
         </tr>
         <tr>
           <td>Channels</td>
-          <td>All</td>
+          <td>All formats</td>
           <td>Same as source (default), Mono or Stereo.</td>
         </tr>
       </tbody>
     </table>
     </div>
 
+    <h3>Set the Default Values Again</h3>
+    <ol>
+      <li>Select the format in the <strong>Format</strong> menu.</li>
+      <li>Click the <strong>Reset to Defaults</strong> button.</li>
+    </ol>
+
     <h3>Same as Source</h3>
-    <p><em>Same as source</em> keeps what the file already has. Two formats put limits on that:</p>
+    <p><em>Same as source</em> keeps the value of the source file. There are two exceptions:</p>
     <ul>
-      <li><strong>MP3</strong> stops at 48 kHz. A higher-rate source left at <em>Same as source</em> comes out at a rate MP3 has: a 96 kHz file becomes 48 kHz.</li>
-      <li><strong>Opus</strong> is written in mono or stereo here. A surround source left at <em>Same as source</em> is folded down to stereo.</li>
+      <li><strong>MP3:</strong> The maximum sample rate is 48 kHz. If the source file has a higher sample rate, the output file has a sample rate that MP3 can hold. For example, a 96 kHz source file gives a 48 kHz MP3 file.</li>
+      <li><strong>Opus:</strong> Transcoder writes Opus in mono or stereo. If the source file has more than two channels, the output file is stereo.</li>
     </ul>
-    <p>Choosing a higher sample rate or bit depth than the source has makes a bigger file, not a better one.</p>
+    <p>A higher sample rate or bit depth than the source file makes the output file larger. It does not make the quality better.</p>
   </section>
 
   <!-- Save To -->
   <section id="save-to">
     <h2>Save To</h2>
-    <p>By default each new file is written <strong>beside its source</strong>, in the same folder. <strong>Choose…</strong> picks one folder for every output instead (you can create one from the panel); <strong>Beside Source</strong> goes back to the default.</p>
-    <p>Transcoder never overwrites anything. The new file takes the source's name with the new extension, and when that name is already taken — by an earlier conversion, or by the source itself when it is already in that format — it gets a number: <code>Episode 12.mp3</code>, then <code>Episode 12 2.mp3</code>, <code>Episode 12 3.mp3</code> and so on. The source file is never changed.</p>
+    <p>By default, Transcoder writes each output file in the same folder as its source file.</p>
+
+    <h3>Write All Output Files to One Folder</h3>
+    <ol>
+      <li>In the <strong>Save To</strong> section, click the <strong>Choose…</strong> button.</li>
+      <li>Select a folder. To make a new folder, click <strong>New Folder</strong>.</li>
+      <li>Click <strong>Choose</strong>.</li>
+    </ol>
+
+    <h3>Write Each Output File Next to Its Source File</h3>
+    <ol>
+      <li>In the <strong>Save To</strong> section, click the <strong>Beside Source</strong> button.</li>
+    </ol>
+
+    <h3>File Names</h3>
+    <p>Transcoder does not write over a file. The output file has the name of the source file and the extension of the output format. If a file with that name exists, Transcoder adds a number: <code>Episode 12.mp3</code>, <code>Episode 12 2.mp3</code>, <code>Episode 12 3.mp3</code>. This also applies when the source file has the same format as the output file. Transcoder does not change the source file.</p>
   </section>
 
   <!-- Queue -->
   <section id="queue">
     <h2>The Batch Queue</h2>
-    <p><strong>Convert</strong> works through every waiting row, one file at a time, top to bottom. It takes the format, settings and folder as they are when you press it; the settings pane is locked until the batch ends.</p>
+    <p>When you click the <strong>Convert</strong> button, Transcoder converts all rows that are waiting. It converts one file at a time, from the top of the queue to the bottom. It uses the format, the settings and the output folder that are set when you click <strong>Convert</strong>. You cannot change the settings until the batch is completed.</p>
 
     <figure class="shot">
-      <img src="../screenshots/tc-converting.png" width="1800" height="984" alt="A batch under way: one file done, one with a progress bar, three waiting">
-      <figcaption>Under way: the current file shows its progress, finished ones the file they wrote.</figcaption>
+      <img src="../screenshots/tc-converting.png" width="1800" height="984" alt="A batch in progress: one file completed, one file with a progress bar, three files that wait">
+      <figcaption>A batch in progress. The current file shows a progress bar.</figcaption>
     </figure>
 
-    <h3>Row States</h3>
+    <h3>Row Status</h3>
     <div class="table-wrap">
-    <table class="settings-table">
+    <table class="settings-table wrap">
       <thead>
-        <tr><th>State</th><th>Shown as</th><th>Meaning</th></tr>
+        <tr><th>Status</th><th>Symbol</th><th>Meaning</th></tr>
       </thead>
       <tbody>
-        <tr><td>Waiting</td><td>Empty circle</td><td>Will be converted by the next Convert.</td></tr>
-        <tr><td>Converting</td><td>Spinner, progress bar</td><td>Progress is the share of the file's duration encoded so far.</td></tr>
-        <tr><td>Done</td><td>Green check</td><td>The row names the file written. Reveal it with the magnifier, the context menu, or the toolbar.</td></tr>
-        <tr><td>Failed</td><td>Orange triangle</td><td>The row shows why, usually the last lines FFmpeg printed. Nothing is left behind.</td></tr>
-        <tr><td>Cancelled</td><td>Slashed circle</td><td>Stopped by Cancel, or never started because the batch was cancelled.</td></tr>
+        <tr><td>Waiting</td><td>Empty circle</td><td>Transcoder converts the file when you click the Convert button.</td></tr>
+        <tr><td>Converting</td><td>Progress indicator and progress bar</td><td>The progress bar shows the part of the file that is converted.</td></tr>
+        <tr><td>Completed</td><td>Green check mark</td><td>The row shows the name of the output file. To show the file in Finder, click the magnifier button.</td></tr>
+        <tr><td>Failed</td><td>Orange triangle</td><td>The row shows the cause, usually the last lines from FFmpeg. Transcoder deletes the incomplete output file.</td></tr>
+        <tr><td>Cancelled</td><td>Circle with a line</td><td>You clicked the Cancel button before or during the conversion of the file.</td></tr>
       </tbody>
     </table>
     </div>
 
-    <h3>Cancelling</h3>
-    <p><strong>Cancel</strong> stops the file being converted, deletes its half-written output, and marks it and every file still waiting as cancelled. Files already done stay done.</p>
+    <h3>Stop a Batch</h3>
+    <ol>
+      <li>Click the <strong>Cancel</strong> button.</li>
+    </ol>
+    <p>Transcoder stops the current file and deletes its incomplete output file. The current file and all files that wait change to <em>Cancelled</em>. Completed files do not change.</p>
 
-    <h3>Running a Batch Again</h3>
-    <p>Add more files at any time; they wait for the next Convert. A failed or cancelled file can be converted again by removing it and adding it back. <strong>Clear Finished</strong> tidies the queue of everything that has run.</p>
+    <h3>Convert a File Again</h3>
+    <ol>
+      <li>Click the <strong>remove</strong> button (−) on the row of the failed or cancelled file.</li>
+      <li>Add the file again.</li>
+      <li>Click the <strong>Convert</strong> button.</li>
+    </ol>
+    <p>You can add files at any time. Files that you add during a batch wait for the next batch. To remove all rows that are completed, failed or cancelled, click the <strong>Clear Finished</strong> button.</p>
   </section>
 
   <!-- Metadata -->
   <section id="metadata">
     <h2>Tags &amp; Cover Art</h2>
-    <p>Title, artist, album, track number and the rest of a file's tags are copied to the new file, whether the source keeps them in the container (MP3, M4A, FLAC, WAV, AIFF) or on the audio stream (Ogg and Opus). FFmpeg writes its own encoder tag in place of the source's. Chapters are not carried over.</p>
-    <p>A cover picture embedded in the source is copied into every format that can hold one:</p>
+    <p>Transcoder copies the tags of the source file to the output file, for example the title, the artist, the album and the track number. Some formats keep the tags in the container (MP3, M4A, FLAC, WAV, AIFF). Ogg and Opus keep the tags on the audio stream. Transcoder reads the tags from the correct location. FFmpeg writes its own encoder tag. Transcoder does not copy chapters.</p>
+    <p>If the source file has a cover picture, Transcoder copies it to all formats that can hold it:</p>
     <div class="table-wrap">
     <table class="formats-table">
       <thead>
         <tr><th>Format</th><th>Tags</th><th>Cover art</th></tr>
       </thead>
       <tbody>
-        <tr><td>MP3</td><td>Yes (ID3v2.3 + ID3v1)</td><td>Yes</td></tr>
+        <tr><td>MP3</td><td>Yes (ID3v2.3 and ID3v1)</td><td>Yes</td></tr>
         <tr><td>AAC, ALAC</td><td>Yes (iTunes atoms)</td><td>Yes</td></tr>
         <tr><td>FLAC</td><td>Yes (Vorbis comments)</td><td>Yes</td></tr>
         <tr><td>AIFF</td><td>Yes (ID3)</td><td>Yes</td></tr>
-        <tr><td>WAV</td><td>The common fields (RIFF INFO: title, artist, album and the like)</td><td>No — WAV has no standard place for a picture</td></tr>
-        <tr><td>Opus</td><td>Yes (Vorbis comments)</td><td>No — FFmpeg's Ogg writer cannot embed one</td></tr>
+        <tr><td>WAV</td><td>The usual tags only (RIFF INFO: title, artist, album and some others)</td><td>No. WAV has no standard location for a picture.</td></tr>
+        <tr><td>Opus</td><td>Yes (Vorbis comments)</td><td>No. The Ogg writer of FFmpeg cannot add a picture.</td></tr>
       </tbody>
     </table>
     </div>
-    <p>A JPEG or PNG cover is copied as it is; any other kind is converted to JPEG. The note at the bottom of the settings pane says which applies to the chosen format.</p>
+    <p>Transcoder copies a JPEG or PNG cover without change. It converts other picture types to JPEG. The note at the bottom of the settings pane tells you if the selected format can hold cover art.</p>
   </section>
 
   <!-- Updates -->
   <section id="updates">
     <h2>Updates</h2>
-    <p>At launch Transcoder asks GitHub whether a newer release exists, and says nothing unless one does. <strong>Help › Check for Updates…</strong> asks at any time and always answers.</p>
-    <p>When there is an update, <strong>Update and Relaunch</strong> downloads it, checks that the disk image and the app inside it are signed by the same Developer ID as the copy you are running, swaps the new app into place and relaunches. If anything fails, nothing changes and you are offered the download instead. An update never interrupts a conversion: it waits for the batch to finish, then asks before relaunching.</p>
-    <p>The button reads <strong>Download</strong> instead, and opens the DMG in your browser, when this copy cannot replace itself: when it is running from the disk image or from where it was downloaded (move it to Applications), when you do not have permission to replace it, or when it is not a signed release.</p>
-    <p>A release that needs a newer macOS than this Mac has is not offered; Check for Updates says so instead.</p>
+    <p>When Transcoder starts, it looks on GitHub for a new version. If there is no new version, it does not show a message.</p>
+
+    <h3>Look for an Update Now</h3>
+    <ol>
+      <li>Select <strong>Help › Check for Updates…</strong>.</li>
+    </ol>
+    <p>Transcoder always shows the result.</p>
+
+    <h3>Install an Update</h3>
+    <ol>
+      <li>When the update message shows, click <strong>Update and Relaunch</strong>.</li>
+    </ol>
+    <p>Transcoder downloads the update. It makes sure that the DMG and the app in it have the same Developer ID signature as the installed app. Then it replaces the installed app and starts again. If a step fails, Transcoder does not change the installed app. It shows a <strong>Download</strong> button. Use this button to download the DMG and install it yourself.</p>
+    <p>An update does not stop a batch. Transcoder waits until the batch is completed. Then it asks you before it starts again.</p>
+
+    <h3>When the Button Is Download</h3>
+    <p>In some conditions, Transcoder cannot replace itself. The update message then shows a <strong>Download</strong> button, not <strong>Update and Relaunch</strong>. This occurs if:</p>
+    <ul>
+      <li>Transcoder operates from the DMG or from the Downloads folder. Move it to the Applications folder.</li>
+      <li>You do not have permission to replace the app.</li>
+      <li>The app is not a signed release.</li>
+    </ul>
+    <p>If a new version needs a newer macOS than your Mac has, Transcoder does not offer it. <strong>Check for Updates…</strong> tells you this.</p>
   </section>
 
   <!-- Troubleshooting -->
@@ -705,34 +774,34 @@
     <div class="table-wrap">
     <table class="settings-table wrap">
       <thead>
-        <tr><th>Message</th><th>What it means</th></tr>
+        <tr><th>Message</th><th>Cause and action</th></tr>
       </thead>
       <tbody>
-        <tr><td>The file has no audio.</td><td>FFmpeg found no audio stream in it — a silent video, or a file that is not what its extension says.</td></tr>
-        <tr><td>Could not read the file: …</td><td>ffprobe could not open the file. It may be damaged, incomplete, or a format FFmpeg does not read.</td></tr>
-        <tr><td>FFmpeg failed (exit …): …</td><td>The conversion itself failed; the rest of the message is FFmpeg's own last lines. A source that is corrupt part-way through is the usual cause.</td></tr>
-        <tr><td>FFmpeg finished but wrote no file.</td><td>Rare; usually the destination folder was moved or became read-only during the run.</td></tr>
-        <tr><td>The bundled FFmpeg is missing.</td><td>The app is damaged. Download it again.</td></tr>
+        <tr><td>The file has no audio.</td><td>The file has no audio stream. It is a video with no sound, or a file with an incorrect extension. Use a different source file.</td></tr>
+        <tr><td>Could not read the file: …</td><td>ffprobe cannot open the file. The file is damaged or incomplete, or FFmpeg cannot read its format. Use a different source file.</td></tr>
+        <tr><td>FFmpeg failed (exit …): …</td><td>The conversion failed. The message shows the last lines from FFmpeg. Usually, a part of the source file is damaged.</td></tr>
+        <tr><td>FFmpeg finished but wrote no file.</td><td>Possibly the output folder moved or became read-only during the conversion. Make sure that the output folder exists and that you can write to it.</td></tr>
+        <tr><td>The bundled FFmpeg is missing.</td><td>The app is damaged. Download and install Transcoder again.</td></tr>
       </tbody>
     </table>
     </div>
-    <p>Something else wrong? <strong>Help › Report an Issue…</strong> opens one on <a href="https://github.com/sevmorris/Transcoder/issues">GitHub</a>.</p>
+    <p>For other problems, select <strong>Help › Report an Issue…</strong>. This opens a new issue on <a href="https://github.com/sevmorris/Transcoder/issues">GitHub</a>.</p>
   </section>
 
   <!-- FFmpeg -->
   <section id="ffmpeg">
     <h2>FFmpeg &amp; Licences</h2>
-    <p>Transcoder does its decoding and encoding with <a href="https://ffmpeg.org">FFmpeg</a> 9.0.2, bundled inside the app as the <code>ffmpeg</code> and <code>ffprobe</code> command-line tools. It is a static, audio-only build for Apple Silicon, made by the repository's own <code>scripts/build-ffmpeg.sh</code>, with two outside libraries linked in:</p>
+    <p>Transcoder uses <a href="https://ffmpeg.org">FFmpeg</a> 9.0.2 to decode and encode audio. The app contains the <code>ffmpeg</code> and <code>ffprobe</code> programs. They are a static, audio-only build for Apple Silicon. The script <code>scripts/build-ffmpeg.sh</code> in the repository makes them. The build contains two other libraries:</p>
     <ul>
-      <li><strong>LAME</strong> 4.0 for MP3 (LGPL)</li>
-      <li><strong>libopus</strong> 1.6.1 for Opus (BSD 3-clause)</li>
+      <li><strong>LAME</strong> 4.0, for MP3 (LGPL).</li>
+      <li><strong>libopus</strong> 1.6.1, for Opus (BSD 3-clause).</li>
     </ul>
-    <p>AAC, Apple Lossless, FLAC, WAV and AIFF use FFmpeg's own encoders.</p>
+    <p>AAC, Apple Lossless, FLAC, WAV and AIFF use the encoders of FFmpeg.</p>
     <div class="callout">
       <strong>Licences</strong>
-      Transcoder itself is MIT-licensed. The bundled FFmpeg is licensed under the <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">GNU LGPL, version 2.1 or later</a>: it is built without <code>--enable-gpl</code>, <code>--enable-nonfree</code> or <code>--enable-version3</code>. Its corresponding source is the FFmpeg, LAME and Opus release archives named in <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/ffmpeg-manifest.env"><code>Vendor/ffmpeg-manifest.env</code></a>, built by <a href="https://github.com/sevmorris/Transcoder/blob/main/scripts/build-ffmpeg.sh"><code>scripts/build-ffmpeg.sh</code></a>; the build is reproducible, so rebuilding gives the same binaries byte for byte. See <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/README.md"><code>Vendor/README.md</code></a> and <a href="../theory.html#ffmpeg-build">The Bundled FFmpeg</a>.
+      Transcoder has the MIT licence. The bundled FFmpeg has the <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">GNU LGPL, version 2.1 or later</a>. Its build does not use <code>--enable-gpl</code>, <code>--enable-nonfree</code> or <code>--enable-version3</code>. The corresponding source is the FFmpeg, LAME and Opus release archives in <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/ffmpeg-manifest.env"><code>Vendor/ffmpeg-manifest.env</code></a>, and the script <a href="https://github.com/sevmorris/Transcoder/blob/main/scripts/build-ffmpeg.sh"><code>scripts/build-ffmpeg.sh</code></a>. The build is reproducible: if you build again, you get the same binaries. See <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/README.md"><code>Vendor/README.md</code></a> and <a href="../theory.html#ffmpeg-build">The Bundled FFmpeg</a>.
     </div>
-    <p>FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project. Transcoder is not affiliated with it.</p>
+    <p>FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project. Transcoder is not related to the FFmpeg project.</p>
   </section>
 
 </main>
