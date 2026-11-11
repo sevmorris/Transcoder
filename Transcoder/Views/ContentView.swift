@@ -46,7 +46,10 @@ struct ContentView: View {
                     QueueRow(item: item)
                         .contextMenu {
                             Button("Reveal in Finder") { vm.reveal(item) }.disabled(item.outputURL == nil)
-                            Button("Remove") { vm.remove(item) }
+                            Button("Convert Again") { vm.convertAgain(item) }
+                                .disabled(vm.isRunning || !item.isFinished)
+                            Divider()
+                            Button("Remove") { vm.remove(item) }.disabled(vm.isRunning)
                         }
                 }
             }
@@ -57,8 +60,11 @@ struct ContentView: View {
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItemGroup {
             Button { vm.chooseInputs() } label: { Label("Add Files", systemImage: "plus") }
+            Button { vm.resetFinished() } label: { Label("Convert Again", systemImage: "arrow.counterclockwise") }
+                .help("Put every completed, failed and cancelled row back to Waiting")
+                .disabled(vm.isRunning || !vm.hasFinished)
             Button { vm.clearFinished() } label: { Label("Clear Finished", systemImage: "xmark.circle") }
-                .disabled(vm.isRunning || !vm.items.contains(where: \.isFinished))
+                .disabled(vm.isRunning || !vm.hasFinished)
             Button { vm.revealAll() } label: { Label("Reveal in Finder", systemImage: "folder") }
                 .disabled(!vm.items.contains { $0.outputURL != nil })
             if vm.isRunning {

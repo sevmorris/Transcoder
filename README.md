@@ -15,7 +15,7 @@ A macOS app that converts audio: drop files in, pick a format, convert. Audio on
 
 - **Formats:** MP3, AAC (M4A), Apple Lossless (M4A), FLAC, WAV, AIFF, Opus (OGG).
 - **Presets per format:** bitrate for the lossy formats, bit depth for the lossless ones, sample rate and channels for all (or "same as source"). Each format remembers its own.
-- **Batch queue:** add files or whole folders; per-file progress, cancel, and Reveal in Finder.
+- **Batch queue:** add files or whole folders; per-file progress, cancel, Convert Again, and Reveal in Finder.
 - **Metadata:** tags and cover artwork are carried through. WAV and Opus keep the tags but have no place FFmpeg can put a cover.
 - Outputs go beside each source or into a chosen folder, and never overwrite: a taken name gets a number.
 

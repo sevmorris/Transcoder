@@ -572,7 +572,7 @@
       </tbody>
     </table>
     </div>
-    <p>ffprobe gets 60 seconds. A file it cannot open, or JSON it cannot parse, fails with <em>Could not read the file</em>.</p>
+    <p>ffprobe gets 60 seconds. A file it cannot open, or JSON it cannot parse, fails with <em>Could not read the file</em>. <code>FFmpegProcess</code> captures one stream, and the JSON is on stdout, so when ffprobe exits non-zero <code>Converter.probe</code> runs it a second time capturing stderr, and the message ends with ffprobe's last line of complaint, the path it starts with removed: <em>Could not read the file: Invalid data found when processing input</em>. If ffprobe says nothing, the message gives its exit status.</p>
   </section>
 
   <!-- Command -->
@@ -599,7 +599,7 @@
       </div></li>
       <li><div>
         <strong>Sample rate and channels <span class="tag">Optional</span></strong>
-        <span><code>-ar</code> and <code>-ac</code>, only when the preset sets them. <em>Same as source</em> adds neither, and FFmpeg keeps the source's values unless the encoder cannot take them. Opus always gets <code>-ar 48000</code>, and <code>-ac 2</code> when the source has more than two channels and the preset leaves channels alone.</span>
+        <span><code>-ar</code> and <code>-ac</code>, only when the preset sets them. <em>Same as source</em> adds neither, and FFmpeg keeps the source's values unless the encoder cannot take them (see <a href="#codecs">below</a>). Opus always gets <code>-ar 48000</code>, and <code>-ac 2</code> when the source has more than two channels and the preset leaves channels alone.</span>
       </div></li>
       <li><div>
         <strong>Cover <span class="tag">Optional</span></strong>
@@ -624,7 +624,7 @@
         <tr><td>Opus</td><td><span class="val">-c:a libopus -b:a 128k</span></td><td><span class="val">-f opus</span></td></tr>
         <tr><td>ALAC 16 / 24</td><td><span class="val">-c:a alac -sample_fmt s16p</span><br><span class="val">-c:a alac -sample_fmt s32p -bits_per_raw_sample 24</span></td><td><span class="val">-f ipod -movflags +faststart</span></td></tr>
         <tr><td>FLAC 16 / 24</td><td><span class="val">-c:a flac -sample_fmt s16</span><br><span class="val">-c:a flac -sample_fmt s32 -bits_per_raw_sample 24</span></td><td>—</td></tr>
-        <tr><td>WAV 16 / 24 / 32f</td><td><span class="val">-c:a pcm_s16le</span> · <span class="val">pcm_s24le</span> · <span class="val">pcm_f32le</span></td><td>—</td></tr>
+        <tr><td>WAV 16 / 24 / 32f</td><td><span class="val">-c:a pcm_s16le</span> · <span class="val">pcm_s24le</span> · <span class="val">pcm_f32le</span></td><td><span class="val">-rf64 auto</span></td></tr>
         <tr><td>AIFF 16 / 24</td><td><span class="val">-c:a pcm_s16be</span> · <span class="val">pcm_s24be</span></td><td><span class="val">-write_id3v2 1</span></td></tr>
       </tbody>
     </table>
@@ -641,8 +641,16 @@
       <li><strong>32-bit float WAV.</strong> Offered for WAV only, for handing to a DAW: a float file cannot clip, whatever gain comes later.</li>
     </ul>
 
-    <h3>Sample Rates the Encoder Will Not Take</h3>
+    <h3>Sample Rates and Channels the Encoder Will Not Take</h3>
     <p>When <em>Same as source</em> meets an encoder that cannot accept the source's rate, FFmpeg resamples to a rate the encoder supports. MP3 is defined only up to 48 kHz, so a 96 kHz source written as MP3 at <em>Same as source</em> comes out at 48 kHz. That is why the MP3 sample-rate list stops at 48 kHz, and why Opus has none.</p>
+    <p>Channels work the same way. LAME encodes mono or stereo only, so FFmpeg folds a surround source to stereo for MP3 with no <code>-ac</code> from Transcoder. For Opus, Transcoder asks for stereo itself, with <code>-ac 2</code>, as above. AAC, Apple Lossless, FLAC, WAV and AIFF keep a 5.1 source's six channels; <code>ConversionTests</code> checks all seven.</p>
+
+    <h3 id="four-gb">Files Past 4 GB</h3>
+    <p>WAV and AIFF keep their sizes in 32-bit fields, so neither can describe a file past 4 GB: 15½ minutes of 8 channels of 24-bit audio at 192 kHz, or about 4 hours of 24-bit stereo at 48 kHz. The other formats have no such limit.</p>
+    <ul>
+      <li><strong>WAV</strong> has RF64, an extension that moves the sizes into a 64-bit chunk. FFmpeg's WAV muxer defaults to <code>-rf64 never</code>, and with it a WAV past 4 GB is written with a size of <code>0xFFFFFFFF</code>, a warning that the file will be broken, and exit status 0: the file reads as 699 s of a 720 s recording. Transcoder passes <code>-rf64 auto</code>, which writes an ordinary WAV header with a reserved <code>JUNK</code> chunk, and turns it into RF64 at the end only if the file passed 4 GB. A WAV under 4 GB is still a plain RIFF file, 36 bytes larger.</li>
+      <li><strong>AIFF</strong> has no 64-bit form, and FFmpeg's AIFF muxer writes sizes that have wrapped round, again with exit status 0: a 960 s file reads as 27.9 s. So <code>AIFFLimit</code> refuses the conversion before FFmpeg starts when duration × sample rate × channels × bytes per sample, plus 64 KB for the header and tags, would pass the 32-bit FORM size (2<sup>32</sup> − 1 bytes after the first 8). A source whose container gives no duration cannot be estimated, so after FFmpeg finishes the written file's size is checked against the same limit, and a file past it is deleted. Either way the row fails with <em>Too large for AIFF</em>.</li>
+    </ul>
   </section>
 
   <!-- Metadata -->
@@ -667,11 +675,12 @@
     <p>FFmpeg's <code>-progress</code> writes <code>key=value</code> blocks to a temporary file as it goes. A detached task reads that file every 250 ms, takes the latest <code>out_time_us</code>, and divides by the duration ffprobe reported. That fraction is the row's progress bar. A source with no known duration has no bar to fill; it shows done when it is done. The progress file is deleted afterwards.</p>
 
     <h3>Time Limit</h3>
-    <p>Each run may take <code>max(600 s, 4 × duration)</code>. That is generous on purpose: it exists to catch a hung process, not a slow one. A run that hits it is stopped and fails.</p>
+    <p>Each run may take <code>max(600 s, 4 × duration)</code>, or 24 hours when the container gives no duration (<code>Converter.timeLimit</code>). That is generous on purpose: it exists to catch a hung process, not a slow one, and a source of unknown length may be a long one. A run that hits it is stopped and fails.</p>
 
     <h3>Cancellation and Failure</h3>
     <p>Cancel cancels the batch's Swift task. <code>FFmpegProcess</code> turns that into <code>SIGTERM</code> for the running ffmpeg and reports a cancellation. The subtlety is that FFmpeg catches <code>SIGTERM</code> and exits normally with status 255, the same as many real failures, so the process runner records whether it sent the signal itself before it decides what an exit means. Without that, a crashed encode could read as a cancel and quietly stop the whole batch, or a cancel could read as an error.</p>
     <p>Any exit other than success — non-zero status, crash, timeout, cancel — deletes the partly written output, so a failed row never leaves a truncated file beside the source. A non-zero exit fails with FFmpeg's last three lines of stderr, which is usually the sentence that says what went wrong.</p>
+    <p>Before any of that, <code>Converter.convert</code> checks that the destination folder exists. A chosen folder on a drive that has been disconnected fails each row with <em>The output folder is not available</em> and the folder's path, rather than FFmpeg's own error about the output file.</p>
   </section>
 
   <!-- Queue -->
@@ -679,10 +688,14 @@
     <h2>The Queue</h2>
 
     <h3>Adding</h3>
-    <p>Dropped URLs and the open panel's selection go through one path, <code>ContentViewModel.add</code>. A folder is enumerated recursively, skipping hidden files, filtered and sorted by path. A file is accepted when the uniform type for its extension conforms to <code>public.audio</code>, <code>public.movie</code> or <code>public.audiovisual-content</code> — the same three types the open panel allows — and is not already in the queue.</p>
+    <p>Dropped URLs and the open panel's selection go through one path, <code>ContentViewModel.add</code>. A folder is enumerated recursively, skipping hidden files, filtered and sorted by path. A file is accepted when the uniform type for its extension conforms to <code>public.audio</code>, <code>public.movie</code> or <code>public.audiovisual-content</code>, or its extension is in <code>ContentViewModel.extraExtensions</code>, and it is not already in the queue. The open panel allows the same: those three types and a type for each extra extension.</p>
+    <p>The extra extensions are those macOS gives no audio or video type of its own, all of which the bundled FFmpeg decodes: <code>.dsf</code> and <code>.dff</code> (DSD), <code>.weba</code>, <code>.tak</code>, <code>.shn</code> and <code>.rf64</code>, and <code>.wv</code>, <code>.ape</code>, <code>.tta</code>, <code>.mpc</code>, <code>.mka</code> and <code>.mkv</code>, which macOS knows only when another app declares them (VLC does). Without VLC, macOS's own types call <code>.ape</code> a StuffIt archive.</p>
+    <p>"Already in the queue" compares paths after resolving symbolic links, so the same file added twice in one drop, or once directly and once inside a folder, or through a link, gets one row.</p>
 
     <h3>Converting</h3>
-    <p>Convert takes a snapshot of the format, its preset and the destination folder, then walks the waiting rows in order, awaiting each conversion before starting the next. One at a time is deliberate: an encode already uses the CPU well, a batch finishes in the order it was queued, and a failure is attributed to one file. Rows added during a run are not part of it; they wait for the next Convert.</p>
+    <p>Convert takes a snapshot of the format, its preset, the destination folder and the rows that are waiting, then walks those rows in order, awaiting each conversion before starting the next. One at a time is deliberate: an encode already uses the CPU well, a batch finishes in the order it was queued, and a failure is attributed to one file. Rows added during a run are not part of it; they wait for the next Convert, and a Cancel marks only the batch's own waiting rows <em>Cancelled</em>.</p>
+    <p>Because the batch holds the rows it started with, no row leaves the queue while it runs: <code>remove</code> and <code>clearFinished</code> do nothing while <code>isRunning</code>, and the row's button and context menu are disabled to match. A waiting row removed from the list mid-batch would otherwise still be converted, out of sight.</p>
+    <p><em>Convert Again</em> (<code>convertAgain</code> for one row, <code>resetFinished</code> for all) sets a completed, failed or cancelled row back to waiting, also never during a batch. The next Convert treats it as any other waiting row, with the settings of that moment, and its output gets a fresh name by the rule below, so an earlier output is never overwritten.</p>
 
     <h3>Naming</h3>
     <p><code>ArgumentBuilder.uniqueOutputURL</code> takes the source's name without its extension, adds the format's extension, and if that path exists tries <code>name 2</code>, <code>name 3</code>… until one is free. The check covers the source itself, so converting <code>talk.mp3</code> to MP3 beside its source writes <code>talk 2.mp3</code>. The destination is chosen when that file's turn comes, so two sources with the same name in one batch also get distinct outputs.</p>
@@ -695,6 +708,7 @@
   <section id="settings">
     <h2>Settings Storage</h2>
     <p><code>TranscoderSettings</code> — the chosen format, a <code>Preset</code> per format, and the output folder path — is encoded as JSON and kept under one key, <code>TranscoderSettings</code>, in the app's defaults domain, <code>io.github.sevmorris.Transcoder</code>. It is written on every change. A format with no saved preset uses <code>Preset.defaults(for:)</code>; a preset field left empty means <em>Same as source</em>.</p>
+    <p>Because <code>OutputFormat</code> is not <code>CodingKeyRepresentable</code>, the presets dictionary is encoded as an array of alternating keys and values: <code>{"format":"flac","presets":["flac",{"bitDepth":16},"mp3",{"bitrateKbps":192}]}</code>. Encoding is synthesized, so every version writes that shape. Decoding is not: it takes each field that is present and readable and keeps the default for the rest, so settings saved by another version load. A key it does not know is ignored, a field it expects and does not find keeps its default, a preset for a format it does not know (or one it cannot read) is dropped while the others load, and a chosen format it does not know falls back to MP3. A synthesized decoder would have thrown on the first of these and lost every setting.</p>
     <p>The app reaches its defaults through <code>UserDefaults.app</code>, never <code>.standard</code>. When the binary is hosting the unit tests, <code>AppLauncher</code> starts it with no window and no update check, and <code>UserDefaults.app</code> is a scratch suite in the temporary folder, so a test run never reads or writes the real settings.</p>
   </section>
 
@@ -778,7 +792,7 @@ ffmpeg -hide_banner -nostdin -y -i "talk.mp3" \
   -ar 48000 \
   -f opus \
   "talk.opus"</code></pre>
-    <p><code>ArgumentBuilderTests</code> checks each part of these command lines — encoders, bitrates, sample formats, rates, mapping, artwork, naming — without running FFmpeg, and <code>ConversionTests</code> runs the bundled FFmpeg end to end: a tagged sample with a cover, converted to all seven formats, each output probed for its codec, its tags and, where the container holds one, its artwork.</p>
+    <p><code>ArgumentBuilderTests</code> checks each part of these command lines — encoders, bitrates, sample formats, rates, mapping, artwork, naming, <code>-rf64</code> — without running FFmpeg, along with the AIFF size limit, the time limit and the settings decoder against JSON in the shape 0.1.0 wrote. <code>QueueTests</code> checks the queue rules with a stand-in converter. <code>ConversionTests</code> runs the bundled FFmpeg end to end: a tagged sample with a cover, converted to all seven formats, each output probed for its codec, its tags and, where the container holds one, its artwork; Ogg Opus tags, which live on the stream; a BMP cover, which must arrive as JPEG; a 5.1 source; a cancel mid-run, which must leave no file; and a file ffprobe cannot read.</p>
   </section>
 
 </main>

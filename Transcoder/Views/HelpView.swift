@@ -12,6 +12,7 @@ struct HelpView: View {
                 Text("Each format remembers its own bitrate, sample rate, channels and bit depth. \"Same as source\" keeps what the file already has.")
                 Text("Tags and cover art come across. WAV and Opus keep the tags but have no place FFmpeg can put a cover.")
                 Text("Outputs go beside each source unless you choose a folder. Nothing is overwritten: a name already taken gets a number.")
+                Text("To convert a finished file again, right-click its row and choose Convert Again, or use the Convert Again button for every finished row. Then click Convert.")
             }
             .fixedSize(horizontal: false, vertical: true)
             HStack { Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.defaultAction) }
