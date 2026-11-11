@@ -11,6 +11,10 @@
   <a href="https://sevmorris.github.io/Transcoder/theory.html">Theory of Operation</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/tc-done.png" width="720" alt="Transcoder after a batch: five files converted to MP3, each with a Reveal in Finder button, beside the Output and Save To settings" />
+</p>
+
 A macOS app that converts audio: drop files in, pick a format, convert. Audio only — from a video file it takes the first audio track and writes nothing else.
 
 - **Formats:** MP3, AAC (M4A), Apple Lossless (M4A), FLAC, WAV, AIFF, Opus (OGG).
