@@ -5,8 +5,8 @@
 #   e.g. ./release.sh 1.0.0
 #
 # Requires: xcodebuild, hdiutil, gh (GitHub CLI), git, codesign, xcrun, curl,
-#   and python3 with dmgbuild; preflight checks each. Transcoder has no Pages
-#   site, so unlike its siblings this script prunes no deployments.
+#   and python3 with dmgbuild; preflight checks each. prune-deployments (mrk's
+#   bin/) trims the Pages deployments afterwards when it is on PATH.
 
 set -euo pipefail
 
@@ -55,6 +55,9 @@ APP_PATH="$DERIVED_DATA/Build/Products/Release/Transcoder.app"
 DMG="/tmp/Transcoder-${TAG}.dmg"
 APP_ZIP="/tmp/Transcoder-${TAG}-app.zip"
 MOUNT="/tmp/transcoder_verify_${VERSION}"
+DOCS="$PROJECT_DIR/docs/index.html"
+DOCS_THEORY="$PROJECT_DIR/docs/theory.html"
+MANUAL_IDX="$PROJECT_DIR/docs/manual/index.html"
 NOTES_FILE="$PROJECT_DIR/release-notes/${TAG}.md"
 TEST_LOG="/tmp/transcoder_test_${VERSION}.log"
 
@@ -290,19 +293,21 @@ else
 fi
 
 # Always update docs — runs even if version was pre-bumped
-sed -i '' "s|Transcoder-v[0-9][0-9.]*\.dmg|Transcoder-${TAG}.dmg|g" README.md
+sed -i '' "s|Transcoder-v[0-9][0-9.]*\.dmg|Transcoder-${TAG}.dmg|g" "$DOCS" "$DOCS_THEORY" "$MANUAL_IDX" README.md
+sed -i '' "s|Download v[0-9][0-9.]*|Download ${TAG}|g" "$DOCS" "$MANUAL_IDX"
+sed -i '' "s|Manual — v[0-9][0-9.]*|Manual — ${TAG}|g" "$MANUAL_IDX"
 sed -i '' "s|\[Download v[0-9][0-9.]* (DMG)\].*Transcoder-v[0-9][0-9.]*.dmg)|\[Download ${TAG} (DMG)\](https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-${TAG}.dmg)|g" README.md
 sed -i '' "s|\*\*Version:\*\* [0-9][0-9.]*|**Version:** ${VERSION}|g" README.md
 sed -i '' "s|<strong>Version:</strong> [0-9][0-9.]*|<strong>Version:</strong> ${VERSION}|g" README.md
 
 # Sanity-check: nothing should still reference the old version.
-if grep -E "Transcoder-v[0-9]+\.[0-9]+\.[0-9]+\.dmg" README.md \
+if grep -E "Transcoder-v[0-9]+\.[0-9]+\.[0-9]+\.dmg" "$DOCS" "$DOCS_THEORY" "$MANUAL_IDX" README.md \
         | grep -v "${TAG}\.dmg" >/dev/null; then
     fail "Stale version references remain after rewrite — check sed patterns"
 fi
 
 if [[ -n "$(git status --porcelain)" ]]; then
-    git add "$PROJECT/project.pbxproj" README.md
+    git add "$PROJECT/project.pbxproj" "$DOCS" "$DOCS_THEORY" "$MANUAL_IDX" README.md
     git commit -m "Bump version to $VERSION"
     ok "Committed version bump"
 else
@@ -525,7 +530,7 @@ else
             | grep -v "^- docs:" || true)
     fi
     [[ -n "$CHANGES" ]] || CHANGES="- Initial release"
-    RELEASE_NOTES="**[Transcoder on GitHub](https://github.com/sevmorris/Transcoder)**
+    RELEASE_NOTES="**[App Page](https://sevmorris.github.io/Transcoder/)**
 
 ### Changes
 ${CHANGES}"
@@ -597,6 +602,19 @@ else
         gh release delete "$old_tag" --repo "$REPO" --yes 2>/dev/null || true
         ok "Pruned release page for $old_tag (tag kept)"
     done <<< "$OLD_TAGS"
+fi
+
+# ── Remove old Pages deployments ─────────────────────────────────────────────
+# Delegated to prune-deployments (mrk's bin/, on PATH), as in the siblings. It
+# always protects the most recent successful deployment — the push above has
+# just started a new one, which may still be building or may fail — and keeps
+# ten, as the repo-standards skill asks. The release is published by now, so a
+# missing tool or a failed prune is reported rather than failing the run.
+step "Removing old Pages deployments"
+if ! command -v prune-deployments &>/dev/null; then
+    warn "prune-deployments is not on PATH (it ships in mrk's bin/) — Pages deployments were not pruned"
+elif ! prune-deployments --repo "$REPO" --keep 10; then
+    warn "Pruning Pages deployments reported errors — the release itself is published"
 fi
 
 # ── Clean up temp files ───────────────────────────────────────────────────────

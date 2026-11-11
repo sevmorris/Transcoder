@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Transcoder Manual</title>
+  <meta name="description" content="Manual for Transcoder, an audio converter for macOS: formats, settings, the batch queue, tags and cover art.">
+  <link rel="icon" type="image/png" href="../icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:     #0e0e0e;
+      --dark:      #1a1816;
+      --mid:       #242018;
+      --light:     #f2ead8;
+      --cream:     #e8dfc8;
+      --muted:     #9c8a6a;
+      --orange:    #d4520a;
+      --orange-lt: #e8641c;
+      --border:    rgba(156,138,106,0.2);
+      --code-bg:   #111110;
+      --font-disp: 'Bebas Neue', 'Arial Narrow', sans-serif;
+      --font-ui:   'Barlow Condensed', 'Arial Narrow', sans-serif;
+      --font-body: 'Barlow', Arial, sans-serif;
+      --font-mono: 'SF Mono', 'Fira Mono', 'Menlo', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--dark);
+      color: var(--light);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+      opacity: 0.035;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── Sidebar ── */
+    nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: 230px;
+      min-width: 230px;
+      background: var(--black);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 28px 0 40px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .nav-brand span {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: 0.04em;
+      color: var(--light);
+      display: block;
+      line-height: 1.1;
+    }
+    .nav-brand small {
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+
+    nav a {
+      font-family: var(--font-ui);
+      display: block;
+      padding: 5px 20px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      line-height: 1.5;
+    }
+    nav a:hover {
+      color: var(--orange-lt);
+      border-left-color: var(--orange);
+      text-decoration: none;
+    }
+    nav a.section-head {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--orange);
+      padding-top: 16px;
+      padding-bottom: 4px;
+      pointer-events: none;
+      border-left-color: transparent;
+    }
+    nav a.sub { padding-left: 32px; }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      max-width: 820px;
+      padding: 56px 48px 100px;
+      background: var(--dark);
+    }
+
+    section { margin-bottom: 64px; }
+
+    h1 {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+      color: var(--light);
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-family: var(--font-disp);
+      font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+      color: var(--light);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-family: var(--font-ui);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--orange);
+      margin: 28px 0 10px;
+    }
+    h4 {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 20px 0 8px;
+    }
+
+    p { margin-bottom: 14px; color: var(--cream); }
+    p:last-child { margin-bottom: 0; }
+
+    a { color: var(--orange); text-decoration: none; }
+    a:hover { color: var(--orange-lt); text-decoration: none; }
+
+    ul, ol { padding-left: 20px; margin-bottom: 14px; color: var(--cream); }
+    li { margin-bottom: 6px; line-height: 1.5; }
+    li:last-child { margin-bottom: 0; }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.84em;
+      background: var(--code-bg);
+      color: var(--cream);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+    pre code { background: none; padding: 0; font-size: 0.85rem; border: none; }
+
+    .callout {
+      background: var(--mid);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--orange);
+      border-radius: 0;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      font-size: 0.9rem;
+    }
+    .callout-warn { border-left-color: #e6820a; }
+    .callout strong { display: block; margin-bottom: 4px; color: var(--orange); }
+
+    /* ── Hero ── */
+    .hero { margin-bottom: 56px; }
+    .hero h1 { margin-bottom: 12px; }
+    .hero p { font-size: 1.1rem; color: var(--cream); max-width: 560px; }
+    .hero-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      display: inline-block;
+      padding: 9px 20px;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary {
+      background: var(--orange);
+      color: var(--black);
+    }
+    .btn-primary:hover { background: var(--orange-lt); color: var(--black); }
+    .btn-secondary {
+      background: var(--mid);
+      color: var(--light);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Settings table ── */
+    .settings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .settings-table th {
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      background: var(--black);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--cream);
+    }
+    .settings-table tr:last-child td { border-bottom: none; }
+    .settings-table td:first-child { font-weight: 600; white-space: nowrap; color: var(--light); }
+    .settings-table td:nth-child(2) { color: var(--muted); white-space: nowrap; }
+
+    /* ── Pipeline steps ── */
+    .pipeline {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin-bottom: 14px;
+      color: var(--cream);
+    }
+    .pipeline li {
+      counter-increment: step;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .pipeline li::before {
+      content: counter(step);
+      min-width: 28px;
+      height: 28px;
+      background: var(--orange);
+      color: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .pipeline li div { flex: 1; }
+    .pipeline li strong { display: block; font-size: 0.95rem; margin-bottom: 3px; color: var(--light); }
+    .pipeline li span { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── Tag ── */
+    .tag {
+      display: inline-block;
+      background: transparent;
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      font-family: var(--font-ui);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+
+    /* ── Formats table ── */
+    .formats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+    .formats-table th {
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      background: var(--black);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .formats-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--cream);
+      vertical-align: top;
+    }
+    .formats-table tr:last-child td { border-bottom: none; }
+    .formats-table td:first-child { font-family: var(--font-mono); font-size: 0.82rem; color: var(--orange); white-space: nowrap; }
+
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      body { flex-direction: column; }
+      nav {
+        position: static;
+        height: auto;
+        width: 100%;
+        min-width: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        overflow-x: auto;
+      }
+      .nav-brand { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+      nav a.section-head { display: none; }
+      nav a { padding: 4px 12px; white-space: nowrap; }
+      nav a.sub { padding-left: 12px; }
+      main { padding: 32px 24px 60px; }
+      h1 { font-size: 2.2rem; }
+    }
+
+    /* ── Transcoder additions ── */
+    :root { color-scheme: dark; }
+    main { min-width: 0; }
+    .table-wrap { overflow-x: auto; margin-bottom: 14px; }
+    .table-wrap > table { margin-bottom: 0; }
+    .settings-table.wrap td { white-space: normal; }
+
+    figure.shot { margin: 18px 0 22px; }
+    figure.shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      background: var(--black);
+    }
+    figure.shot.narrow { max-width: 300px; }
+    figure.shot figcaption {
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .shot-pair { display: flex; gap: 18px; flex-wrap: wrap; }
+    .shot-pair figure.shot { flex: 1 1 220px; max-width: 300px; margin-top: 0; }
+
+    kbd {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      color: var(--light);
+      background: var(--mid);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <span>Transcoder</span>
+    <small>Manual — v0.1.0</small>
+  </div>
+  <a class="section-head" href="#">Overview</a>
+  <a href="#overview">Introduction</a>
+  <a href="#getting-started">Getting Started</a>
+  <a href="#interface">The Interface</a>
+  <a class="section-head" href="#">Using It</a>
+  <a href="#adding-files">Adding Files</a>
+  <a href="#formats">Output Formats</a>
+  <a href="#presets">Format Settings</a>
+  <a href="#save-to">Save To</a>
+  <a href="#queue">The Batch Queue</a>
+  <a href="#metadata">Tags &amp; Cover Art</a>
+  <a class="section-head" href="#">Reference</a>
+  <a href="#updates">Updates</a>
+  <a href="#troubleshooting">Troubleshooting</a>
+  <a href="#ffmpeg">FFmpeg &amp; Licences</a>
+  <a class="section-head" href="#">Deep Dive</a>
+  <a href="../theory.html">Theory of Operation</a>
+</nav>
+
+<main>
+
+  <!-- Hero -->
+  <div class="hero" id="overview">
+    <h1>Transcoder</h1>
+    <p>Transcoder converts audio files on a Mac. It writes MP3, AAC, Apple Lossless, FLAC, WAV, AIFF and Opus. From a video file, it writes only the first audio track. It copies the tags and the cover art.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-v0.1.0.dmg">Download v0.1.0</a>
+      <a class="btn btn-secondary" href="https://github.com/sevmorris/Transcoder">GitHub</a>
+      <a class="btn btn-secondary" href="../theory.html">Theory of Operation →</a>
+    </div>
+  </div>
+
+  <figure class="shot">
+    <img src="../screenshots/tc-done.png" width="1800" height="984" alt="The Transcoder window: five completed rows in the queue on the left, the MP3 settings in the settings pane on the right">
+    <figcaption>A completed batch. Each row shows the name of its output file.</figcaption>
+  </figure>
+
+  <!-- Getting Started -->
+  <section id="getting-started">
+    <h2>Getting Started</h2>
+
+    <h3>System Requirements</h3>
+    <ul>
+      <li>macOS 15.0 (Sequoia) or later.</li>
+      <li>A Mac with Apple Silicon. Transcoder does not operate on a Mac with an Intel processor.</li>
+      <li>No other software. FFmpeg and ffprobe are in the app.</li>
+      <li>Transcoder is free and open source (MIT licence).</li>
+    </ul>
+
+    <h3>Install Transcoder</h3>
+    <ol>
+      <li>Download the DMG file. Use the link at the top of this page.</li>
+      <li>Open the DMG file.</li>
+      <li>Drag <strong>Transcoder</strong> to the Applications folder.</li>
+      <li>Open Transcoder from the Applications folder.</li>
+    </ol>
+    <div class="callout">
+      <strong>Note</strong>
+      Open Transcoder from the Applications folder, not from the DMG or the Downloads folder. If you do not, Transcoder cannot <a href="#updates">update itself</a>.
+    </div>
+
+    <h3>Convert Files</h3>
+    <ol>
+      <li>Drag audio files, video files or folders onto the Transcoder window.</li>
+      <li>Select the output format in the <strong>Format</strong> menu.</li>
+      <li>Set the other settings in the settings pane, if necessary.</li>
+      <li>Click the <strong>Convert</strong> button, or push <kbd>⌘</kbd><kbd>↩</kbd>.</li>
+    </ol>
+    <p>Transcoder writes each output file in the same folder as its source file. To use a different folder, see <a href="#save-to">Save To</a>.</p>
+  </section>
+
+  <!-- Interface -->
+  <section id="interface">
+    <h2>The Interface</h2>
+    <p>The Transcoder window has two parts. The queue is on the left. The settings pane is on the right.</p>
+
+    <figure class="shot">
+      <img src="../screenshots/tc-idle.png" width="1800" height="984" alt="The Transcoder window with an empty queue and the Choose Files button">
+      <figcaption>An empty queue. Drag files onto it, or click the Choose Files… button.</figcaption>
+    </figure>
+
+    <h3>Queue</h3>
+    <p>The queue has one row for each file. A row shows the name of the source file. Below the name, the row shows the status of the file. See <a href="#queue">Row Status</a>.</p>
+    <p>At the end of the row there is one button:</p>
+    <ul>
+      <li>The <strong>remove</strong> button (−) removes a file that is waiting.</li>
+      <li>The <strong>magnifier</strong> button shows a completed output file in Finder.</li>
+    </ul>
+    <p>Right-click a row to see the same commands: <strong>Reveal in Finder</strong> and <strong>Remove</strong>.</p>
+
+    <h3>Settings Pane</h3>
+    <p>The settings pane has the output format, the format settings and the output folder. A note at the bottom tells you if the format can hold cover art. You cannot change the settings while Transcoder converts files.</p>
+
+    <h3>Toolbar</h3>
+    <div class="table-wrap">
+    <table class="settings-table wrap">
+      <thead>
+        <tr><th>Button</th><th>Key</th><th>Function</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Add Files (+)</td><td>⌘O</td><td>Opens a panel. In the panel, select files or folders. The menu command <strong>File › Add Files…</strong> does the same.</td></tr>
+        <tr><td>Clear Finished</td><td></td><td>Removes all rows that are completed, failed or cancelled. Rows that are waiting stay in the queue.</td></tr>
+        <tr><td>Reveal in Finder</td><td></td><td>Shows all output files of the queue in Finder.</td></tr>
+        <tr><td>Convert</td><td>⌘↩</td><td>Converts all files that are waiting. While Transcoder converts files, this button changes to <strong>Cancel</strong>.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Help Menu</h3>
+    <ul>
+      <li><strong>Transcoder Help</strong> (<kbd>⌘</kbd><kbd>?</kbd>) shows a short summary of how to use Transcoder.</li>
+      <li><strong>Check for Updates…</strong> looks for a new version now. See <a href="#updates">Updates</a>.</li>
+      <li><strong>Report an Issue…</strong> opens a new issue on GitHub.</li>
+    </ul>
+  </section>
+
+  <!-- Adding Files -->
+  <section id="adding-files">
+    <h2>Adding Files</h2>
+    <p>You can add files and folders in two ways.</p>
+
+    <h3>Drag Files onto the Window</h3>
+    <ol>
+      <li>Select the files or folders in Finder.</li>
+      <li>Drag them onto the Transcoder window.</li>
+    </ol>
+    <p>The queue changes colour when you hold files above it.</p>
+
+    <h3>Use the Open Panel</h3>
+    <ol>
+      <li>Click the <strong>Add Files</strong> button (+), or push <kbd>⌘</kbd><kbd>O</kbd>. If the queue is empty, you can also click the <strong>Choose Files…</strong> button.</li>
+      <li>Select one or more files or folders.</li>
+      <li>Click <strong>Open</strong>.</li>
+    </ol>
+
+    <figure class="shot">
+      <img src="../screenshots/tc-queue.png" width="1800" height="984" alt="Five files that wait in the queue">
+      <figcaption>Five files wait in the queue. The source files are AIFF, FLAC, Apple Lossless, MP3 and WAV.</figcaption>
+    </figure>
+
+    <h3>Files That Transcoder Accepts</h3>
+    <p>Transcoder accepts a file if macOS identifies its extension as audio or video. Some examples are MP3, M4A, WAV, AIFF, FLAC, Ogg, Opus, MOV, MP4 and M4V. Transcoder ignores all other files and does not show a message. If you add the same file two times, the queue shows it one time.</p>
+    <p>When you add a folder, Transcoder looks in the folder and in all its subfolders. It ignores hidden files. It adds the files in the alphabetical order of their paths.</p>
+
+    <div class="callout">
+      <strong>Video files</strong>
+      Transcoder does not write video. From a video file, it writes only the first audio track. It ignores all other audio tracks, for example other languages or a commentary. If a file has no audio, the conversion fails with the message <em>The file has no audio.</em>
+    </div>
+  </section>
+
+  <!-- Output Formats -->
+  <section id="formats">
+    <h2>Output Formats</h2>
+    <p>Transcoder uses one output format for all files in a batch. Select the format in the <strong>Format</strong> menu at the top of the settings pane.</p>
+
+    <div class="table-wrap">
+    <table class="formats-table">
+      <thead>
+        <tr><th>Extension</th><th>Format</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>.mp3</td><td>MP3</td><td>Lossy. Almost all players can play it. The encoder is LAME. The tags are ID3v2.3, with an ID3v1 tag for old players.</td></tr>
+        <tr><td>.m4a</td><td>AAC (M4A)</td><td>Lossy. This is the format of Apple Music. At the same quality, the file is smaller than MP3. The encoder is the AAC encoder of FFmpeg.</td></tr>
+        <tr><td>.m4a</td><td>Apple Lossless (M4A)</td><td>Lossless. The file is approximately half the size of WAV. Music, iPhone and iPad can play it.</td></tr>
+        <tr><td>.flac</td><td>FLAC</td><td>Lossless and open. Many archives and download stores use it.</td></tr>
+        <tr><td>.wav</td><td>WAV</td><td>Uncompressed PCM. Use it for audio editors. It keeps the tags, but not the cover art.</td></tr>
+        <tr><td>.aiff</td><td>AIFF</td><td>Uncompressed PCM, the Apple equivalent of WAV. The tags and the cover art are ID3.</td></tr>
+        <tr><td>.opus</td><td>Opus (OGG)</td><td>Lossy. Of the three lossy formats, Opus gives the best quality at a low bitrate. Speech is good at 48 kbps. The sample rate is always 48 kHz. The encoder is libopus. It keeps the tags, but not the cover art.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+      <strong>Lossy to lossy</strong>
+      A lossy encoder removes some audio data. If you convert a lossy file to a different lossy format, the encoder removes more data. If you convert a lossy file to a lossless format, the result keeps all the data of the lossy file, but it does not replace the data that was removed. Always use the best source file that you have. See <a href="../theory.html#generations">Generations and Headroom</a>.
+    </div>
+  </section>
+
+  <!-- Presets -->
+  <section id="presets">
+    <h2>Format Settings</h2>
+    <p>Each format has its own settings. Transcoder keeps the settings of each format. For example, if you change from MP3 to FLAC and back to MP3, the MP3 bitrate does not change. Transcoder also keeps the format and the output folder when you quit.</p>
+
+    <div class="shot-pair">
+      <figure class="shot">
+        <img src="../screenshots/tc-wav-panel.png" width="560" height="984" alt="Settings for WAV: Bit depth 24-bit, Sample rate and Channels Same as source">
+        <figcaption>A lossless format has a Bit depth menu, not a Bitrate menu.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../screenshots/tc-opus-panel.png" width="560" height="984" alt="Settings for Opus: Bitrate 128 kbps, Sample rate 48 kHz">
+        <figcaption>For Opus, the sample rate is always 48 kHz.</figcaption>
+      </figure>
+    </div>
+
+    <div class="table-wrap">
+    <table class="settings-table wrap">
+      <thead>
+        <tr><th>Menu</th><th>Formats</th><th>Values</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bitrate</td>
+          <td>MP3, AAC, Opus</td>
+          <td>MP3: 96, 128, 160, 192, 224, 256, 320 kbps (default 320).<br>AAC: 96, 128, 160, 192, 256, 320 kbps (default 256).<br>Opus: 48, 64, 96, 128, 160, 192, 256 kbps (default 128).<br>MP3 and AAC use the bitrate for all of the file. Opus changes the bitrate a small quantity above and below the value.</td>
+        </tr>
+        <tr>
+          <td>Bit depth</td>
+          <td>WAV, AIFF, FLAC, Apple Lossless</td>
+          <td>16-bit or 24-bit (default 24). WAV also has 32-bit float.</td>
+        </tr>
+        <tr>
+          <td>Sample rate</td>
+          <td>All formats, but not Opus</td>
+          <td>Same as source (default), 44.1, 48, 88.2 or 96 kHz. For MP3: Same as source, 32, 44.1 or 48 kHz. Opus is always 48 kHz.</td>
+        </tr>
+        <tr>
+          <td>Channels</td>
+          <td>All formats</td>
+          <td>Same as source (default), Mono or Stereo.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Set the Default Values Again</h3>
+    <ol>
+      <li>Select the format in the <strong>Format</strong> menu.</li>
+      <li>Click the <strong>Reset to Defaults</strong> button.</li>
+    </ol>
+
+    <h3>Same as Source</h3>
+    <p><em>Same as source</em> keeps the value of the source file. There are two exceptions:</p>
+    <ul>
+      <li><strong>MP3:</strong> The maximum sample rate is 48 kHz. If the source file has a higher sample rate, the output file has a sample rate that MP3 can hold. For example, a 96 kHz source file gives a 48 kHz MP3 file.</li>
+      <li><strong>Opus:</strong> Transcoder writes Opus in mono or stereo. If the source file has more than two channels, the output file is stereo.</li>
+    </ul>
+    <p>A higher sample rate or bit depth than the source file makes the output file larger. It does not make the quality better.</p>
+  </section>
+
+  <!-- Save To -->
+  <section id="save-to">
+    <h2>Save To</h2>
+    <p>By default, Transcoder writes each output file in the same folder as its source file.</p>
+
+    <h3>Write All Output Files to One Folder</h3>
+    <ol>
+      <li>In the <strong>Save To</strong> section, click the <strong>Choose…</strong> button.</li>
+      <li>Select a folder. To make a new folder, click <strong>New Folder</strong>.</li>
+      <li>Click <strong>Choose</strong>.</li>
+    </ol>
+
+    <h3>Write Each Output File Next to Its Source File</h3>
+    <ol>
+      <li>In the <strong>Save To</strong> section, click the <strong>Beside Source</strong> button.</li>
+    </ol>
+
+    <h3>File Names</h3>
+    <p>Transcoder does not write over a file. The output file has the name of the source file and the extension of the output format. If a file with that name exists, Transcoder adds a number: <code>Episode 12.mp3</code>, <code>Episode 12 2.mp3</code>, <code>Episode 12 3.mp3</code>. This also applies when the source file has the same format as the output file. Transcoder does not change the source file.</p>
+  </section>
+
+  <!-- Queue -->
+  <section id="queue">
+    <h2>The Batch Queue</h2>
+    <p>When you click the <strong>Convert</strong> button, Transcoder converts all rows that are waiting. It converts one file at a time, from the top of the queue to the bottom. It uses the format, the settings and the output folder that are set when you click <strong>Convert</strong>. You cannot change the settings until the batch is completed.</p>
+
+    <figure class="shot">
+      <img src="../screenshots/tc-converting.png" width="1800" height="984" alt="A batch in progress: one file completed, one file with a progress bar, three files that wait">
+      <figcaption>A batch in progress. The current file shows a progress bar.</figcaption>
+    </figure>
+
+    <h3>Row Status</h3>
+    <div class="table-wrap">
+    <table class="settings-table wrap">
+      <thead>
+        <tr><th>Status</th><th>Symbol</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Waiting</td><td>Empty circle</td><td>Transcoder converts the file when you click the Convert button.</td></tr>
+        <tr><td>Converting</td><td>Progress indicator and progress bar</td><td>The progress bar shows the part of the file that is converted.</td></tr>
+        <tr><td>Completed</td><td>Green check mark</td><td>The row shows the name of the output file. To show the file in Finder, click the magnifier button.</td></tr>
+        <tr><td>Failed</td><td>Orange triangle</td><td>The row shows the cause, usually the last lines from FFmpeg. Transcoder deletes the incomplete output file.</td></tr>
+        <tr><td>Cancelled</td><td>Circle with a line</td><td>You clicked the Cancel button before or during the conversion of the file.</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Stop a Batch</h3>
+    <ol>
+      <li>Click the <strong>Cancel</strong> button.</li>
+    </ol>
+    <p>Transcoder stops the current file and deletes its incomplete output file. The current file and all files that wait change to <em>Cancelled</em>. Completed files do not change.</p>
+
+    <h3>Convert a File Again</h3>
+    <ol>
+      <li>Click the <strong>remove</strong> button (−) on the row of the failed or cancelled file.</li>
+      <li>Add the file again.</li>
+      <li>Click the <strong>Convert</strong> button.</li>
+    </ol>
+    <p>You can add files at any time. Files that you add during a batch wait for the next batch. To remove all rows that are completed, failed or cancelled, click the <strong>Clear Finished</strong> button.</p>
+  </section>
+
+  <!-- Metadata -->
+  <section id="metadata">
+    <h2>Tags &amp; Cover Art</h2>
+    <p>Transcoder copies the tags of the source file to the output file, for example the title, the artist, the album and the track number. Some formats keep the tags in the container (MP3, M4A, FLAC, WAV, AIFF). Ogg and Opus keep the tags on the audio stream. Transcoder reads the tags from the correct location. FFmpeg writes its own encoder tag. Transcoder does not copy chapters.</p>
+    <p>If the source file has a cover picture, Transcoder copies it to all formats that can hold it:</p>
+    <div class="table-wrap">
+    <table class="formats-table">
+      <thead>
+        <tr><th>Format</th><th>Tags</th><th>Cover art</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>MP3</td><td>Yes (ID3v2.3 and ID3v1)</td><td>Yes</td></tr>
+        <tr><td>AAC, ALAC</td><td>Yes (iTunes atoms)</td><td>Yes</td></tr>
+        <tr><td>FLAC</td><td>Yes (Vorbis comments)</td><td>Yes</td></tr>
+        <tr><td>AIFF</td><td>Yes (ID3)</td><td>Yes</td></tr>
+        <tr><td>WAV</td><td>The usual tags only (RIFF INFO: title, artist, album and some others)</td><td>No. WAV has no standard location for a picture.</td></tr>
+        <tr><td>Opus</td><td>Yes (Vorbis comments)</td><td>No. The Ogg writer of FFmpeg cannot add a picture.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Transcoder copies a JPEG or PNG cover without change. It converts other picture types to JPEG. The note at the bottom of the settings pane tells you if the selected format can hold cover art.</p>
+  </section>
+
+  <!-- Updates -->
+  <section id="updates">
+    <h2>Updates</h2>
+    <p>When Transcoder starts, it looks on GitHub for a new version. If there is no new version, it does not show a message.</p>
+
+    <h3>Look for an Update Now</h3>
+    <ol>
+      <li>Select <strong>Help › Check for Updates…</strong>.</li>
+    </ol>
+    <p>Transcoder always shows the result.</p>
+
+    <h3>Install an Update</h3>
+    <ol>
+      <li>When the update message shows, click <strong>Update and Relaunch</strong>.</li>
+    </ol>
+    <p>Transcoder downloads the update. It makes sure that the DMG and the app in it have the same Developer ID signature as the installed app. Then it replaces the installed app and starts again. If a step fails, Transcoder does not change the installed app. It shows a <strong>Download</strong> button. Use this button to download the DMG and install it yourself.</p>
+    <p>An update does not stop a batch. Transcoder waits until the batch is completed. Then it asks you before it starts again.</p>
+
+    <h3>When the Button Is Download</h3>
+    <p>In some conditions, Transcoder cannot replace itself. The update message then shows a <strong>Download</strong> button, not <strong>Update and Relaunch</strong>. This occurs if:</p>
+    <ul>
+      <li>Transcoder operates from the DMG or from the Downloads folder. Move it to the Applications folder.</li>
+      <li>You do not have permission to replace the app.</li>
+      <li>The app is not a signed release.</li>
+    </ul>
+    <p>If a new version needs a newer macOS than your Mac has, Transcoder does not offer it. <strong>Check for Updates…</strong> tells you this.</p>
+  </section>
+
+  <!-- Troubleshooting -->
+  <section id="troubleshooting">
+    <h2>Troubleshooting</h2>
+    <div class="table-wrap">
+    <table class="settings-table wrap">
+      <thead>
+        <tr><th>Message</th><th>Cause and action</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>The file has no audio.</td><td>The file has no audio stream. It is a video with no sound, or a file with an incorrect extension. Use a different source file.</td></tr>
+        <tr><td>Could not read the file: …</td><td>ffprobe cannot open the file. The file is damaged or incomplete, or FFmpeg cannot read its format. Use a different source file.</td></tr>
+        <tr><td>FFmpeg failed (exit …): …</td><td>The conversion failed. The message shows the last lines from FFmpeg. Usually, a part of the source file is damaged.</td></tr>
+        <tr><td>FFmpeg finished but wrote no file.</td><td>Possibly the output folder moved or became read-only during the conversion. Make sure that the output folder exists and that you can write to it.</td></tr>
+        <tr><td>The bundled FFmpeg is missing.</td><td>The app is damaged. Download and install Transcoder again.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>For other problems, select <strong>Help › Report an Issue…</strong>. This opens a new issue on <a href="https://github.com/sevmorris/Transcoder/issues">GitHub</a>.</p>
+  </section>
+
+  <!-- FFmpeg -->
+  <section id="ffmpeg">
+    <h2>FFmpeg &amp; Licences</h2>
+    <p>Transcoder uses <a href="https://ffmpeg.org">FFmpeg</a> 9.0.2 to decode and encode audio. The app contains the <code>ffmpeg</code> and <code>ffprobe</code> programs. They are a static, audio-only build for Apple Silicon. The script <code>scripts/build-ffmpeg.sh</code> in the repository makes them. The build contains two other libraries:</p>
+    <ul>
+      <li><strong>LAME</strong> 4.0, for MP3 (LGPL).</li>
+      <li><strong>libopus</strong> 1.6.1, for Opus (BSD 3-clause).</li>
+    </ul>
+    <p>AAC, Apple Lossless, FLAC, WAV and AIFF use the encoders of FFmpeg.</p>
+    <div class="callout">
+      <strong>Licences</strong>
+      Transcoder has the MIT licence. The bundled FFmpeg has the <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">GNU LGPL, version 2.1 or later</a>. Its build does not use <code>--enable-gpl</code>, <code>--enable-nonfree</code> or <code>--enable-version3</code>. The corresponding source is the FFmpeg, LAME and Opus release archives in <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/ffmpeg-manifest.env"><code>Vendor/ffmpeg-manifest.env</code></a>, and the script <a href="https://github.com/sevmorris/Transcoder/blob/main/scripts/build-ffmpeg.sh"><code>scripts/build-ffmpeg.sh</code></a>. The build is reproducible: if you build again, you get the same binaries. See <a href="https://github.com/sevmorris/Transcoder/blob/main/Vendor/README.md"><code>Vendor/README.md</code></a> and <a href="../theory.html#ffmpeg-build">The Bundled FFmpeg</a>.
+    </div>
+    <p>FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project. Transcoder is not related to the FFmpeg project.</p>
+  </section>
+
+</main>
+
+</body>
+</html>
