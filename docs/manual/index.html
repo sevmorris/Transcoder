@@ -501,10 +501,10 @@
     <p>The queue has one row for each file. A row shows the name of the source file. Below the name, the row shows the status of the file. See <a href="#queue">Row Status</a>.</p>
     <p>At the end of the row there is one button:</p>
     <ul>
-      <li>The <strong>remove</strong> button (−) removes a file that is waiting.</li>
+      <li>The <strong>remove</strong> button (−) removes a row that has no output file: a file that is waiting, failed or was cancelled.</li>
       <li>The <strong>magnifier</strong> button shows a completed output file in Finder.</li>
     </ul>
-    <p>Right-click a row to see the same commands: <strong>Reveal in Finder</strong> and <strong>Remove</strong>.</p>
+    <p>Right-click a row to see its commands: <strong>Reveal in Finder</strong>, <strong>Convert Again</strong> and <strong>Remove</strong>. See <a href="#convert-again">Convert a File Again</a>. While Transcoder converts files, you cannot remove rows or convert them again.</p>
 
     <h3>Settings Pane</h3>
     <p>The settings pane has the output format, the format settings and the output folder. A note at the bottom tells you if the format can hold cover art. You cannot change the settings while Transcoder converts files.</p>
@@ -517,6 +517,7 @@
       </thead>
       <tbody>
         <tr><td>Add Files (+)</td><td>⌘O</td><td>Opens a panel. In the panel, select files or folders. The menu command <strong>File › Add Files…</strong> does the same.</td></tr>
+        <tr><td>Convert Again</td><td></td><td>Changes all rows that are completed, failed or cancelled back to <em>Waiting</em>. See <a href="#convert-again">Convert a File Again</a>.</td></tr>
         <tr><td>Clear Finished</td><td></td><td>Removes all rows that are completed, failed or cancelled. Rows that are waiting stay in the queue.</td></tr>
         <tr><td>Reveal in Finder</td><td></td><td>Shows all output files of the queue in Finder.</td></tr>
         <tr><td>Convert</td><td>⌘↩</td><td>Converts all files that are waiting. While Transcoder converts files, this button changes to <strong>Cancel</strong>.</td></tr>
@@ -557,7 +558,16 @@
     </figure>
 
     <h3>Files That Transcoder Accepts</h3>
-    <p>Transcoder accepts a file if macOS identifies its extension as audio or video. Some examples are MP3, M4A, WAV, AIFF, FLAC, Ogg, Opus, MOV, MP4 and M4V. Transcoder ignores all other files and does not show a message. If you add the same file two times, the queue shows it one time.</p>
+    <p>Transcoder accepts a file if macOS identifies its extension as audio or video. Some examples are MP3, M4A, WAV, AIFF, FLAC, Ogg, Opus, MOV, MP4 and M4V.</p>
+    <p>Transcoder also accepts these extensions. FFmpeg can read them, but macOS does not always identify them as audio:</p>
+    <ul>
+      <li><code>.dsf</code> and <code>.dff</code> (DSD audio)</li>
+      <li><code>.weba</code> (WebM audio)</li>
+      <li><code>.tak</code> (TAK), <code>.shn</code> (Shorten), <code>.wv</code> (WavPack), <code>.ape</code> (Monkey's Audio), <code>.tta</code> (TTA) and <code>.mpc</code> (Musepack)</li>
+      <li><code>.rf64</code> (WAV files larger than 4 GB)</li>
+      <li><code>.mka</code> and <code>.mkv</code> (Matroska)</li>
+    </ul>
+    <p>Transcoder ignores all other files and does not show a message. If you add the same file two times, the queue shows it one time. This also applies if you add the file through an alias path or a symbolic link.</p>
     <p>When you add a folder, Transcoder looks in the folder and in all its subfolders. It ignores hidden files. It adds the files in the alphabetical order of their paths.</p>
 
     <div class="callout">
@@ -581,8 +591,8 @@
         <tr><td>.m4a</td><td>AAC (M4A)</td><td>Lossy. This is the format of Apple Music. At the same quality, the file is smaller than MP3. The encoder is the AAC encoder of FFmpeg.</td></tr>
         <tr><td>.m4a</td><td>Apple Lossless (M4A)</td><td>Lossless. The file is approximately half the size of WAV. Music, iPhone and iPad can play it.</td></tr>
         <tr><td>.flac</td><td>FLAC</td><td>Lossless and open. Many archives and download stores use it.</td></tr>
-        <tr><td>.wav</td><td>WAV</td><td>Uncompressed PCM. Use it for audio editors. It keeps the tags, but not the cover art.</td></tr>
-        <tr><td>.aiff</td><td>AIFF</td><td>Uncompressed PCM, the Apple equivalent of WAV. The tags and the cover art are ID3.</td></tr>
+        <tr><td>.wav</td><td>WAV</td><td>Uncompressed PCM. Use it for audio editors. It keeps the tags, but not the cover art. A WAV file larger than 4 GB is written as RF64, the extension of WAV for large files. The extension stays <code>.wav</code>.</td></tr>
+        <tr><td>.aiff</td><td>AIFF</td><td>Uncompressed PCM, the Apple equivalent of WAV. The tags and the cover art are ID3. An AIFF file cannot be larger than 4 GB. See <a href="#troubleshooting">Troubleshooting</a>.</td></tr>
         <tr><td>.opus</td><td>Opus (OGG)</td><td>Lossy. Of the three lossy formats, Opus gives the best quality at a low bitrate. Speech is good at 48 kbps. The sample rate is always 48 kHz. The encoder is libopus. It keeps the tags, but not the cover art.</td></tr>
       </tbody>
     </table>
@@ -649,9 +659,10 @@
     <h3>Same as Source</h3>
     <p><em>Same as source</em> keeps the value of the source file. There are two exceptions:</p>
     <ul>
-      <li><strong>MP3:</strong> The maximum sample rate is 48 kHz. If the source file has a higher sample rate, the output file has a sample rate that MP3 can hold. For example, a 96 kHz source file gives a 48 kHz MP3 file.</li>
+      <li><strong>MP3:</strong> The maximum sample rate is 48 kHz. If the source file has a higher sample rate, the output file has a sample rate that MP3 can hold. For example, a 96 kHz source file gives a 48 kHz MP3 file. MP3 is also mono or stereo only. If the source file has more than two channels, for example 5.1, the output file is stereo.</li>
       <li><strong>Opus:</strong> Transcoder writes Opus in mono or stereo. If the source file has more than two channels, the output file is stereo.</li>
     </ul>
+    <p>AAC, Apple Lossless, FLAC, WAV and AIFF keep all channels of a surround source file.</p>
     <p>A higher sample rate or bit depth than the source file makes the output file larger. It does not make the quality better.</p>
   </section>
 
@@ -706,15 +717,19 @@
     <ol>
       <li>Click the <strong>Cancel</strong> button.</li>
     </ol>
-    <p>Transcoder stops the current file and deletes its incomplete output file. The current file and all files that wait change to <em>Cancelled</em>. Completed files do not change.</p>
+    <p>Transcoder stops the current file and deletes its incomplete output file. The current file and all other files of the batch that wait change to <em>Cancelled</em>. Completed files do not change. Files that you added during the batch continue to wait.</p>
 
-    <h3>Convert a File Again</h3>
+    <h3 id="convert-again">Convert a File Again</h3>
+    <p>You can convert a completed, failed or cancelled file again, for example with a different format or different settings.</p>
     <ol>
-      <li>Click the <strong>remove</strong> button (−) on the row of the failed or cancelled file.</li>
-      <li>Add the file again.</li>
+      <li>Right-click the row and select <strong>Convert Again</strong>. To do this for all rows that are completed, failed or cancelled, click the <strong>Convert Again</strong> button in the toolbar.</li>
+      <li>The row changes to <em>Waiting</em>. If necessary, change the format or the settings.</li>
       <li>Click the <strong>Convert</strong> button.</li>
     </ol>
-    <p>You can add files at any time. Files that you add during a batch wait for the next batch. To remove all rows that are completed, failed or cancelled, click the <strong>Clear Finished</strong> button.</p>
+    <p>Transcoder does not write over the first output file. The new output file gets the next free name, for example <code>Episode 12 2.mp3</code>. See <a href="#save-to">File Names</a>.</p>
+
+    <h3>During a Batch</h3>
+    <p>You can add files at any time. Files that you add during a batch wait for the next batch. While Transcoder converts files, you cannot remove rows, and <strong>Convert Again</strong> and <strong>Clear Finished</strong> are not available. To remove all rows that are completed, failed or cancelled after the batch, click the <strong>Clear Finished</strong> button.</p>
   </section>
 
   <!-- Metadata -->
@@ -778,7 +793,9 @@
       </thead>
       <tbody>
         <tr><td>The file has no audio.</td><td>The file has no audio stream. It is a video with no sound, or a file with an incorrect extension. Use a different source file.</td></tr>
-        <tr><td>Could not read the file: …</td><td>ffprobe cannot open the file. The file is damaged or incomplete, or FFmpeg cannot read its format. Use a different source file.</td></tr>
+        <tr><td>Could not read the file: …</td><td>ffprobe cannot open the file. The message shows the cause that ffprobe gives, for example <em>Invalid data found when processing input</em>: the file is damaged or incomplete, or FFmpeg cannot read its format. Use a different source file.</td></tr>
+        <tr><td>The output folder is not available: …</td><td>The folder in <strong>Save To</strong> does not exist now. Usually, it is on a drive that is disconnected. Connect the drive, or choose a different folder.</td></tr>
+        <tr><td>Too large for AIFF: …</td><td>The AIFF file would be larger than 4 GB, and an AIFF file cannot hold more. For example, 8 channels of 24-bit audio at 192 kHz reach 4 GB after 15½ minutes. Select WAV, FLAC or Apple Lossless, or a lower sample rate, bit depth or number of channels. Transcoder usually shows this message before it starts. If the source file does not give its length, Transcoder shows it after the conversion and deletes the output file.</td></tr>
         <tr><td>FFmpeg failed (exit …): …</td><td>The conversion failed. The message shows the last lines from FFmpeg. Usually, a part of the source file is damaged.</td></tr>
         <tr><td>FFmpeg finished but wrote no file.</td><td>Possibly the output folder moved or became read-only during the conversion. Make sure that the output folder exists and that you can write to it.</td></tr>
         <tr><td>The bundled FFmpeg is missing.</td><td>The app is damaged. Download and install Transcoder again.</td></tr>

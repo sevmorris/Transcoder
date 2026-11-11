@@ -99,6 +99,15 @@ struct ArgumentBuilderTests {
         #expect(m4a.lastPathComponent == "song.m4a")
     }
 
+    @Test("WAV turns into RF64 past 4 GB rather than write a broken file")
+    func wavRF64() {
+        for depth in [16, 24, 32] {
+            #expect(value(after: "-rf64", in: args(.wav, Preset(bitDepth: depth))) == "auto")
+        }
+        #expect(!args(.aiff).contains("-rf64"))
+        #expect(!args(.flac).contains("-rf64"))
+    }
+
     @Test("Progress reads the last out_time_us")
     func progress() {
         let text = "out_time_us=1000000\nprogress=continue\nout_time_us=2500000\nprogress=continue\n"
@@ -144,8 +153,148 @@ struct SourceInfoTests {
     }
 }
 
+@Suite("AIFFLimit")
+struct AIFFLimitTests {
+    /// 8 channels of 24-bit at 192 kHz: 4,608,000 bytes a second, so 932 s
+    /// fits in an AIFF (measured: FFmpeg writes a good 4,294,656,126-byte file)
+    /// and 933 s does not.
+    func surround(seconds: Double?) -> SourceInfo {
+        SourceInfo(duration: seconds, audioStreamIndex: 0, channels: 8, sampleRate: 192_000,
+                   coverStreamIndex: nil, coverCodec: nil, tagsOnStream: false)
+    }
+
+    @Test("The estimate is duration × rate × channels × bytes per sample")
+    func estimate() {
+        #expect(AIFFLimit.estimatedAudioBytes(preset: Preset(bitDepth: 24), source: surround(seconds: 932)) == 4_294_656_000)
+        #expect(AIFFLimit.estimatedAudioBytes(preset: Preset(bitDepth: 16), source: surround(seconds: 932)) == 2_863_104_000)
+        // The preset's rate and channels win over the source's.
+        #expect(AIFFLimit.estimatedAudioBytes(preset: Preset(sampleRate: 48_000, channels: 2, bitDepth: 24),
+                                              source: surround(seconds: 10)) == 2_880_000)
+        #expect(AIFFLimit.estimatedAudioBytes(preset: Preset(bitDepth: 24), source: surround(seconds: nil)) == nil)
+    }
+
+    @Test("A conversion past 4 GB is refused before it starts")
+    func refusesBeforehand() {
+        let preset = Preset(bitDepth: 24)
+        #expect(!AIFFLimit.wouldOverflow(preset: preset, source: surround(seconds: 932)))
+        #expect(AIFFLimit.wouldOverflow(preset: preset, source: surround(seconds: 933)))
+        #expect(AIFFLimit.wouldOverflow(preset: preset, source: surround(seconds: 960)))
+        #expect(!AIFFLimit.wouldOverflow(preset: Preset(bitDepth: 16), source: surround(seconds: 960)))
+        #expect(!AIFFLimit.wouldOverflow(preset: Preset(channels: 2, bitDepth: 24), source: surround(seconds: 960)))
+        // Unknown length: left to the check on the written file.
+        #expect(!AIFFLimit.wouldOverflow(preset: preset, source: surround(seconds: nil)))
+    }
+
+    @Test("A written file larger than its FORM header can say is caught")
+    func catchesAfterwards() {
+        #expect(!AIFFLimit.overflowed(fileSize: 4_294_656_126))  // 932 s, measured
+        #expect(AIFFLimit.overflowed(fileSize: 4_423_680_126))   // 960 s, measured: reads as 27.9 s
+        #expect(!AIFFLimit.overflowed(fileSize: AIFFLimit.maxFileSize))
+        #expect(AIFFLimit.overflowed(fileSize: AIFFLimit.maxFileSize + 1))
+    }
+}
+
+@Suite("Converter rules")
+struct ConverterRuleTests {
+    @Test("The time limit is four times the length, at least ten minutes, a day when unknown")
+    func timeLimit() {
+        #expect(Converter.timeLimit(duration: 10) == 600)
+        #expect(Converter.timeLimit(duration: 3600) == 14_400)
+        #expect(Converter.timeLimit(duration: nil) == 86_400)
+        #expect(Converter.timeLimit(duration: 0) == 86_400)
+    }
+
+    @Test("A failed probe gives ffprobe's own reason, without the path")
+    func probeReason() {
+        let path = "/in/junk.mp3"
+        let stderr = "[mp3 @ 0x1] Failed to find two consecutive MPEG audio frames.\n/in/junk.mp3: Invalid data found when processing input\n"
+        #expect(Converter.probeFailureReason(stderr: stderr, path: path, status: 1) == "Invalid data found when processing input")
+        #expect(Converter.probeFailureReason(stderr: "other: No such file or directory", path: path, status: 1)
+                == "other: No such file or directory")
+        #expect(Converter.probeFailureReason(stderr: "\n  \n", path: path, status: 1) == "ffprobe exit 1")
+    }
+}
+
 @Suite("TranscoderSettings")
 struct SettingsTests {
+    /// Exactly what 0.1.0 writes, from its synthesized encoder: the presets
+    /// dictionary is an array of alternating keys and values, because
+    /// OutputFormat is not CodingKeyRepresentable, and slashes are escaped.
+    static let saved010 = #"{"outputFolderPath":"\/Volumes\/Out","format":"flac","presets":["flac",{"sampleRate":96000,"bitDepth":16},"mp3",{"bitrateKbps":192}]}"#
+
+    func decode(_ json: String) throws -> TranscoderSettings {
+        try JSONDecoder().decode(TranscoderSettings.self, from: Data(json.utf8))
+    }
+
+    @Test("What 0.1.0 saved loads unchanged")
+    func loads010() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("TranscoderTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = try #require(UserDefaults(suiteName: folder.appendingPathComponent("suite").path))
+        store.set(Data(Self.saved010.utf8), forKey: TranscoderSettings.key)
+
+        let s = TranscoderSettings.load(from: store)
+        #expect(s.format == .flac)
+        #expect(s.outputFolderPath == "/Volumes/Out")
+        #expect(s.presets == [.flac: Preset(sampleRate: 96000, bitDepth: 16), .mp3: Preset(bitrateKbps: 192)])
+        #expect(try decode(#"{"format":"mp3","presets":[]}"#) == TranscoderSettings())
+    }
+
+    @Test("A missing field keeps its default and loses nothing else")
+    func missingField() throws {
+        let s = try decode(#"{"format":"wav","presets":["wav",{"bitDepth":32}]}"#)
+        #expect(s.format == .wav)
+        #expect(s.presets[.wav] == Preset(bitDepth: 32))
+        #expect(s.outputFolderPath == nil)
+        #expect(try decode(#"{"outputFolderPath":"/x"}"#).format == .mp3)
+        #expect(try decode("{}") == TranscoderSettings())
+    }
+
+    @Test("An unknown key is ignored")
+    func unknownKey() throws {
+        let s = try decode(#"{"format":"aac","presets":["aac",{"bitrateKbps":128}],"theme":"dark","future":{"a":[1,2]}}"#)
+        #expect(s.format == .aac)
+        #expect(s.presets[.aac] == Preset(bitrateKbps: 128))
+    }
+
+    @Test("An unknown format costs only its own preset; an unknown chosen format falls back to MP3")
+    func unknownFormat() throws {
+        let s = try decode(#"{"format":"wma","outputFolderPath":"/x","presets":["wma",{"bitrateKbps":128},"flac",{"bitDepth":16}]}"#)
+        #expect(s.format == .mp3)
+        #expect(s.outputFolderPath == "/x")
+        #expect(s.presets == [.flac: Preset(bitDepth: 16)])
+    }
+
+    @Test("A preset this version cannot read is dropped, and the rest kept")
+    func unreadablePreset() throws {
+        let s = try decode(#"{"format":"opus","presets":["mp3",{"bitrateKbps":"loud"},"aac",{"bitrateKbps":128},"opus",null]}"#)
+        #expect(s.format == .opus)
+        #expect(s.presets == [.aac: Preset(bitrateKbps: 128)])
+        // A presets value that is not an array at all loses only the presets.
+        #expect(try decode(#"{"format":"flac","presets":{"flac":{"bitDepth":16}}}"#).format == .flac)
+    }
+
+    @Test("What this version writes is the shape 0.1.0 reads")
+    func writes010Shape() throws {
+        /// 0.1.0's TranscoderSettings, with its synthesized decoder.
+        struct Settings010: Decodable {
+            var format: OutputFormat
+            var presets: [OutputFormat: Preset]
+            var outputFolderPath: String?
+        }
+        var s = TranscoderSettings()
+        s.format = .alac
+        s.presets[.alac] = Preset(sampleRate: 48000, bitDepth: 16)
+        s.outputFolderPath = "/Volumes/Out"
+        let data = try JSONEncoder().encode(s)
+        let old = try JSONDecoder().decode(Settings010.self, from: data)
+        #expect(old.format == .alac)
+        #expect(old.presets == s.presets)
+        #expect(old.outputFolderPath == "/Volumes/Out")
+        #expect(try JSONDecoder().decode(TranscoderSettings.self, from: data) == s)
+    }
+
     @Test("Round-trips through a scratch store, never the real domain")
     func roundTrip() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("TranscoderTests-\(UUID().uuidString)")

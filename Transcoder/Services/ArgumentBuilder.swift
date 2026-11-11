@@ -80,7 +80,11 @@ nonisolated enum ArgumentBuilder {
         case .aiff: ["-write_id3v2", "1"]
         case .aac, .alac: ["-f", "ipod", "-movflags", "+faststart"]
         case .opus: ["-f", "opus"]
-        case .flac, .wav: []
+        // RIFF sizes are 32-bit. FFmpeg's default, -rf64 never, writes a
+        // broken file past 4 GB and still exits 0; auto keeps a plain WAV
+        // until then and turns the header into RF64 when it must.
+        case .wav: ["-rf64", "auto"]
+        case .flac: []
         }
     }
 
