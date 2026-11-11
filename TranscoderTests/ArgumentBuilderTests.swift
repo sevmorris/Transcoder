@@ -20,7 +20,7 @@ struct ArgumentBuilderTests {
 
     @Test("Each format picks its encoder", arguments: [
         (OutputFormat.mp3, "libmp3lame"), (.aac, "aac"), (.alac, "alac"), (.flac, "flac"),
-        (.wav, "pcm_s24le"), (.aiff, "pcm_s24be"), (.opus, "opus"),
+        (.wav, "pcm_s24le"), (.aiff, "pcm_s24be"), (.opus, "libopus"),
     ])
     func encoder(format: OutputFormat, codec: String) {
         #expect(value(after: "-c:a", in: args(format)) == codec)
@@ -50,13 +50,13 @@ struct ArgumentBuilderTests {
         #expect(value(after: "-ac", in: b) == "1")
     }
 
-    @Test("Opus is 48 kHz, experimental, and folds surround to stereo")
+    @Test("Opus is 48 kHz and folds surround to stereo")
     func opus() {
         let surround = SourceInfo(duration: 1, audioStreamIndex: 0, channels: 6, sampleRate: 44100,
                                   coverStreamIndex: nil, coverCodec: nil, tagsOnStream: false)
         let a = args(.opus, source: surround)
         #expect(value(after: "-ar", in: a) == "48000")
-        #expect(value(after: "-strict", in: a) == "-2")
+        #expect(!a.contains("-strict"))
         #expect(value(after: "-ac", in: a) == "2")
     }
 
