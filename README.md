@@ -1,4 +1,15 @@
 # Transcoder
+### Audio Converter for macOS
+
+<p align="center">
+  <strong>Version:</strong> 0.1.0
+  <br />
+  <a href="https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-v0.1.0.dmg"><strong>Download Latest (DMG)</strong></a>
+  ·
+  <a href="https://sevmorris.github.io/Transcoder/manual/">Manual</a>
+  ·
+  <a href="https://sevmorris.github.io/Transcoder/theory.html">Theory of Operation</a>
+</p>
 
 A macOS app that converts audio: drop files in, pick a format, convert. Audio only — from a video file it takes the first audio track and writes nothing else.
 
