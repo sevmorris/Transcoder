@@ -1,0 +1,27 @@
+.DS_Store
+build/
+*.xcuserstate
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Coverage counters (a built app run from a repo drops default.profraw there)
+*.profraw
+
+# DMG artifacts
+*.dmg
+
+# Claude
+.claude/
+
+# Bundled FFmpeg binaries (downloaded via scripts/fetch-ffmpeg.sh)
+Transcoder/ffmpeg
+Transcoder/ffprobe
+
+# Python bytecode from the dmg tooling. Running tools/dmg/*.py leaves a
+# __pycache__ behind, and untracked-but-unignored is enough to fail the
+# dirty-tree check in release.sh's preflight.
+__pycache__/
+*.pyc
