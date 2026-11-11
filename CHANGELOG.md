@@ -4,6 +4,10 @@ All notable changes to Transcoder are documented here. Version numbers match Git
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-11-11
+
+Fixes from a review of 0.1.0, and a way to convert a file again without adding it a second time.
+
 **Added**
 - **Convert Again.** Right-click a completed, failed or cancelled row and choose **Convert Again**, or click the new **Convert Again** toolbar button for every such row. The rows go back to Waiting, ready for the next Convert, with whatever format and settings you choose. The new output gets the next free name, so nothing is overwritten. Until now, the only way was to remove the row and add the file again.
 - **More files are accepted:** `.dsf` and `.dff` (DSD), `.weba`, `.tak`, `.shn` and `.rf64`, which macOS has no audio type for, and `.wv`, `.ape`, `.tta`, `.mpc`, `.mka` and `.mkv`, which it recognises only when another app (such as VLC) is installed. Transcoder ignored all of these without a word, although its FFmpeg reads every one.
