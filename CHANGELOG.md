@@ -4,6 +4,8 @@ All notable changes to Transcoder are documented here. Version numbers match Git
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-11-19
+
 Transcoder now looks like its sibling apps, and a few rough edges from an audit are gone.
 
 **Changed**
@@ -20,6 +22,10 @@ Transcoder now looks like its sibling apps, and a few rough edges from an audit 
 - **Files dropped together are added in the order you dropped them.** Each file was added on its own, in whatever order macOS delivered them.
 - **A dropped folder no longer pulls in the media inside packages**, such as a Photos library, a GarageBand or Logic project, or an app. A package dropped by itself is still looked into.
 - **A read-only output folder is named in plain words**, before FFmpeg runs, rather than as "FFmpeg failed (exit 254) … Permission denied".
+
+**Developer**
+- **`Transcoder --snapshot <folder>`** draws the window in each state the manual pictures, from made-up rows, and saves the PNGs. The manual's screenshots are made this way now; README says how.
+- **`release.sh` cleans up when a step inside a function fails.** It sets `POSIX_TRAPS` before its trap, so a failure there no longer leaves the version bump behind.
 
 ## [0.1.2] — 2026-11-13
 
