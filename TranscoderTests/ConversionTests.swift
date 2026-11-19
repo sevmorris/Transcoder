@@ -192,6 +192,24 @@ struct ConversionTests {
         }
         #expect(ProcessingError.outputFolderMissing(gone.path).localizedDescription.contains(gone.path))
     }
+
+    @Test("An output folder that cannot be written to fails with a message that names it, before FFmpeg runs")
+    func readOnlyOutputFolder() async throws {
+        let folder = try scratchFolder()
+        let locked = folder.appendingPathComponent("Locked")
+        try FileManager.default.createDirectory(at: locked, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: locked.path)
+            try? FileManager.default.removeItem(at: folder)
+        }
+        let sample = try await makeSample(in: folder)
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: locked.path)
+        let output = locked.appendingPathComponent("sample.flac")
+        await #expect(throws: ProcessingError.outputFolderNotWritable(locked.path)) {
+            try await converter.convert(input: sample, output: output, format: .flac, preset: .defaults(for: .flac)) { _ in }
+        }
+        #expect(ProcessingError.outputFolderNotWritable(locked.path).localizedDescription.contains(locked.path))
+    }
 }
 
 final class FractionLog: @unchecked Sendable {

@@ -49,9 +49,20 @@ struct TranscoderApp: App {
         Window("Transcoder", id: "main") {
             ContentView()
                 .environment(viewModel)
-                .frame(minWidth: 720, minHeight: 440)
+                .frame(minWidth: 740, minHeight: 480)
+                // As in WaxOnWaxOff and ClipHack: a quit during a batch stops
+                // FFmpeg, which would otherwise finish the file on its own.
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    viewModel.cancelForQuit()
+                }
         }
         .commands {
+            CommandGroup(after: .toolbar) {
+                Button(viewModel.showSettings ? "Hide Settings" : "Show Settings") {
+                    withAnimation { viewModel.showSettings.toggle() }
+                }
+                .keyboardShortcut("s", modifiers: [.command, .option])
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Add Files…") { viewModel.chooseInputs() }
                     .keyboardShortcut("o", modifiers: .command)

@@ -4,6 +4,23 @@ All notable changes to Transcoder are documented here. Version numbers match Git
 
 ## [Unreleased]
 
+Transcoder now looks like its sibling apps, and a few rough edges from an audit are gone.
+
+**Changed**
+- **The window follows the house style of FilmStrip, ClipHack and WaxOnWaxOff.** The settings pane is a narrow column with small capital labels, a line on what each format is for, and buttons for the bit depth and the channels. The queue rows show a percentage beside the progress bar and a **Reveal** button when a file is done. The empty queue shows what Transcoder does, with a drop area and an **Add Files…** button. Help is set out in sections, with a link to the manual.
+- **The settings pane can be hidden.** Click the **Settings** button in the toolbar, or choose **View › Hide Settings** (⌥⌘S). Transcoder remembers the choice.
+- **Save To is now Output Folder**, with **Choose…** and **Reset**, and you can drop a folder on it to choose it.
+- **Cancel has a key:** ⌘. stops a batch.
+
+**Added**
+- **A failed row shows its whole message.** Hold the pointer on it, or right-click the row and choose **Copy Error Message**. The row shows only two lines of FFmpeg's reason.
+
+**Fixed**
+- **Quitting during a batch stops FFmpeg and deletes the half-written file.** FFmpeg could carry on after Transcoder quit and leave a file behind on its own.
+- **Files dropped together are added in the order you dropped them.** Each file was added on its own, in whatever order macOS delivered them.
+- **A dropped folder no longer pulls in the media inside packages**, such as a Photos library, a GarageBand or Logic project, or an app. A package dropped by itself is still looked into.
+- **A read-only output folder is named in plain words**, before FFmpeg runs, rather than as "FFmpeg failed (exit 254) … Permission denied".
+
 ## [0.1.2] — 2026-11-13
 
 Updating is sturdier. Most of this takes effect from the update after this one, because the version you have now installs this one.

@@ -59,6 +59,11 @@ actor Converter: Converting {
         guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDir), isDir.boolValue else {
             throw ProcessingError.outputFolderMissing(folder.path)
         }
+        // A read-only folder (a mounted image, a shared folder, a locked
+        // one) would fail inside FFmpeg as "exit 254 … Permission denied".
+        guard FileManager.default.isWritableFile(atPath: folder.path) else {
+            throw ProcessingError.outputFolderNotWritable(folder.path)
+        }
 
         let info = try await probe(input)
         if format == .aiff, AIFFLimit.wouldOverflow(preset: preset, source: info) {

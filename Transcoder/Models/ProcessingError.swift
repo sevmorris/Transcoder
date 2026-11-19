@@ -10,6 +10,7 @@ nonisolated enum ProcessingError: LocalizedError, Equatable {
     case noAudioStream
     case outputMissing
     case outputFolderMissing(String)
+    case outputFolderNotWritable(String)
     case tooLargeForAIFF
 
     var errorDescription: String? {
@@ -27,6 +28,8 @@ nonisolated enum ProcessingError: LocalizedError, Equatable {
             return "FFmpeg finished but wrote no file."
         case .outputFolderMissing(let path):
             return "The output folder is not available: \(path). Connect its drive, or choose another folder."
+        case .outputFolderNotWritable(let path):
+            return "Transcoder cannot write to the output folder: \(path). Choose another folder, or change the folder's permissions in Finder."
         case .tooLargeForAIFF:
             return "Too large for AIFF: the file would pass 4 GB, the most AIFF can hold. Choose WAV, FLAC or Apple Lossless, or a lower sample rate, bit depth or channel count."
         }
