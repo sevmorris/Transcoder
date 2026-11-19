@@ -424,7 +424,7 @@
   <a href="#adding-files">Adding Files</a>
   <a href="#formats">Output Formats</a>
   <a href="#presets">Format Settings</a>
-  <a href="#save-to">Save To</a>
+  <a href="#save-to">Output Folder</a>
   <a href="#queue">The Batch Queue</a>
   <a href="#metadata">Tags &amp; Cover Art</a>
   <a class="section-head" href="#">Reference</a>
@@ -449,7 +449,7 @@
   </div>
 
   <figure class="shot">
-    <img src="../screenshots/tc-done.png" width="1800" height="984" alt="The Transcoder window: five completed rows in the queue on the left, the MP3 settings in the settings pane on the right">
+    <img src="../screenshots/tc-done.png" width="1800" height="1120" alt="The Transcoder window: five completed rows in the queue on the left, the MP3 settings in the settings pane on the right">
     <figcaption>A completed batch. Each row shows the name of its output file.</figcaption>
   </figure>
 
@@ -484,7 +484,7 @@
       <li>Set the other settings in the settings pane, if necessary.</li>
       <li>Click the <strong>Convert</strong> button, or push <kbd>⌘</kbd><kbd>↩</kbd>.</li>
     </ol>
-    <p>Transcoder writes each output file in the same folder as its source file. To use a different folder, see <a href="#save-to">Save To</a>.</p>
+    <p>Transcoder writes each output file in the same folder as its source file. To use a different folder, see <a href="#save-to">Output Folder</a>.</p>
   </section>
 
   <!-- Interface -->
@@ -493,21 +493,22 @@
     <p>The Transcoder window has two parts. The queue is on the left. The settings pane is on the right.</p>
 
     <figure class="shot">
-      <img src="../screenshots/tc-idle.png" width="1800" height="984" alt="The Transcoder window with an empty queue and the Choose Files button">
-      <figcaption>An empty queue. Drag files onto it, or click the Choose Files… button.</figcaption>
+      <img src="../screenshots/tc-idle.png" width="1800" height="1280" alt="The Transcoder window with an empty queue and the Add Files button">
+      <figcaption>An empty queue. Drag files onto it, or click the Add Files… button.</figcaption>
     </figure>
 
     <h3>Queue</h3>
     <p>The queue has one row for each file. A row shows the name of the source file. Below the name, the row shows the status of the file. See <a href="#queue">Row Status</a>.</p>
     <p>At the end of the row there is one button:</p>
     <ul>
-      <li>The <strong>remove</strong> button (−) removes a row that has no output file: a file that is waiting, failed or was cancelled.</li>
-      <li>The <strong>magnifier</strong> button shows a completed output file in Finder.</li>
+      <li>The <strong>remove</strong> button (×) removes a row that has no output file: a file that is waiting, failed or was cancelled.</li>
+      <li>The <strong>Reveal</strong> button shows a completed output file in Finder.</li>
     </ul>
-    <p>Right-click a row to see its commands: <strong>Reveal in Finder</strong>, <strong>Convert Again</strong> and <strong>Remove</strong>. See <a href="#convert-again">Convert a File Again</a>. While Transcoder converts files, you cannot remove rows or convert them again.</p>
+    <p>Below the last row, <strong>Add more files…</strong> opens the panel to add files.</p>
+    <p>Right-click a row to see its commands: <strong>Reveal in Finder</strong>, <strong>Convert Again</strong> and <strong>Remove</strong>. A failed row also has <strong>Copy Error Message</strong>. See <a href="#convert-again">Convert a File Again</a>. While Transcoder converts files, you cannot remove rows or convert them again.</p>
 
     <h3>Settings Pane</h3>
-    <p>The settings pane has the output format, the format settings and the output folder. A note at the bottom tells you if the format can hold cover art. You cannot change the settings while Transcoder converts files.</p>
+    <p>The settings pane has the output format, the format settings and the output folder. A note at the bottom tells you if the format can hold cover art. You cannot change the settings while Transcoder converts files. To show or hide the settings pane, click the <strong>Settings</strong> button in the toolbar, or push <kbd>⌥</kbd><kbd>⌘</kbd><kbd>S</kbd>. Transcoder keeps this choice when you quit.</p>
 
     <h3>Toolbar</h3>
     <div class="table-wrap">
@@ -520,7 +521,9 @@
         <tr><td>Convert Again</td><td></td><td>Changes all rows that are completed, failed or cancelled back to <em>Waiting</em>. See <a href="#convert-again">Convert a File Again</a>.</td></tr>
         <tr><td>Clear Finished</td><td></td><td>Removes all rows that are completed, failed or cancelled. Rows that are waiting stay in the queue.</td></tr>
         <tr><td>Reveal in Finder</td><td></td><td>Shows all output files of the queue in Finder.</td></tr>
-        <tr><td>Convert</td><td>⌘↩</td><td>Converts all files that are waiting. While Transcoder converts files, this button changes to <strong>Cancel</strong>.</td></tr>
+        <tr><td>Convert</td><td>⌘↩</td><td>Converts all files that are waiting. While Transcoder converts files, this button changes to <strong>Cancel</strong> (<kbd>⌘</kbd><kbd>.</kbd>).</td></tr>
+        <tr><td>Settings</td><td>⌥⌘S</td><td>Shows or hides the settings pane. The menu command <strong>View › Show Settings</strong> does the same.</td></tr>
+        <tr><td>Help (?)</td><td>⌘?</td><td>Shows a short summary of how to use Transcoder.</td></tr>
       </tbody>
     </table>
     </div>
@@ -543,17 +546,17 @@
       <li>Select the files or folders in Finder.</li>
       <li>Drag them onto the Transcoder window.</li>
     </ol>
-    <p>The queue changes colour when you hold files above it.</p>
+    <p>The queue is highlighted when you hold files above it. Transcoder adds the files in the order that you drag them.</p>
 
     <h3>Use the Open Panel</h3>
     <ol>
-      <li>Click the <strong>Add Files</strong> button (+), or push <kbd>⌘</kbd><kbd>O</kbd>. If the queue is empty, you can also click the <strong>Choose Files…</strong> button.</li>
+      <li>Click the <strong>Add Files</strong> button (+), or push <kbd>⌘</kbd><kbd>O</kbd>. If the queue is empty, you can also click the <strong>Add Files…</strong> button. Below the last row of the queue, you can also click <strong>Add more files…</strong>.</li>
       <li>Select one or more files or folders.</li>
       <li>Click <strong>Open</strong>.</li>
     </ol>
 
     <figure class="shot">
-      <img src="../screenshots/tc-queue.png" width="1800" height="984" alt="Five files that wait in the queue">
+      <img src="../screenshots/tc-queue.png" width="1800" height="1120" alt="Five files that wait in the queue">
       <figcaption>Five files wait in the queue. The source files are AIFF, FLAC, Apple Lossless, MP3 and WAV.</figcaption>
     </figure>
 
@@ -568,7 +571,7 @@
       <li><code>.mka</code> and <code>.mkv</code> (Matroska)</li>
     </ul>
     <p>Transcoder ignores all other files and does not show a message. If you add the same file two times, the queue shows it one time. This also applies if you add the file through an alias path or a symbolic link.</p>
-    <p>When you add a folder, Transcoder looks in the folder and in all its subfolders. It ignores hidden files. It adds the files in the alphabetical order of their paths.</p>
+    <p>When you add a folder, Transcoder looks in the folder and in all its subfolders. It ignores hidden files. It does not look inside packages, for example a Photos library, a Logic Pro project or an app. To add the files in a package, add the package itself. It adds the files in the alphabetical order of their paths.</p>
 
     <div class="callout">
       <strong>Video files</strong>
@@ -611,11 +614,11 @@
 
     <div class="shot-pair">
       <figure class="shot">
-        <img src="../screenshots/tc-wav-panel.png" width="560" height="984" alt="Settings for WAV: Bit depth 24-bit, Sample rate and Channels Same as source">
-        <figcaption>A lossless format has a Bit depth menu, not a Bitrate menu.</figcaption>
+        <img src="../screenshots/tc-wav-panel.png" width="560" height="1120" alt="Settings for WAV: Bit depth 24-bit, Sample rate Same as source, Channels Source">
+        <figcaption>A lossless format has Bit depth buttons, not a Bitrate menu.</figcaption>
       </figure>
       <figure class="shot">
-        <img src="../screenshots/tc-opus-panel.png" width="560" height="984" alt="Settings for Opus: Bitrate 128 kbps, Sample rate 48 kHz">
+        <img src="../screenshots/tc-opus-panel.png" width="560" height="1120" alt="Settings for Opus: Bitrate 128 kbps, Sample rate 48 kHz">
         <figcaption>For Opus, the sample rate is always 48 kHz.</figcaption>
       </figure>
     </div>
@@ -623,7 +626,7 @@
     <div class="table-wrap">
     <table class="settings-table wrap">
       <thead>
-        <tr><th>Menu</th><th>Formats</th><th>Values</th></tr>
+        <tr><th>Setting</th><th>Formats</th><th>Values</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -644,7 +647,7 @@
         <tr>
           <td>Channels</td>
           <td>All formats</td>
-          <td>Same as source (default), Mono or Stereo.</td>
+          <td>Source (default), Mono or Stereo. Source keeps the channels of the source file.</td>
         </tr>
       </tbody>
     </table>
@@ -666,21 +669,22 @@
     <p>A higher sample rate or bit depth than the source file makes the output file larger. It does not make the quality better.</p>
   </section>
 
-  <!-- Save To -->
+  <!-- Output Folder -->
   <section id="save-to">
-    <h2>Save To</h2>
+    <h2>Output Folder</h2>
     <p>By default, Transcoder writes each output file in the same folder as its source file.</p>
 
     <h3>Write All Output Files to One Folder</h3>
     <ol>
-      <li>In the <strong>Save To</strong> section, click the <strong>Choose…</strong> button.</li>
+      <li>In the <strong>Output Folder</strong> section, click the <strong>Choose…</strong> button.</li>
       <li>Select a folder. To make a new folder, click <strong>New Folder</strong>.</li>
       <li>Click <strong>Choose</strong>.</li>
     </ol>
+    <p>You can also drag a folder from Finder onto the <strong>Output Folder</strong> section.</p>
 
     <h3>Write Each Output File Next to Its Source File</h3>
     <ol>
-      <li>In the <strong>Save To</strong> section, click the <strong>Beside Source</strong> button.</li>
+      <li>In the <strong>Output Folder</strong> section, click the <strong>Reset</strong> button.</li>
     </ol>
 
     <h3>File Names</h3>
@@ -693,8 +697,8 @@
     <p>When you click the <strong>Convert</strong> button, Transcoder converts all rows that are waiting. It converts one file at a time, from the top of the queue to the bottom. It uses the format, the settings and the output folder that are set when you click <strong>Convert</strong>. You cannot change the settings until the batch is completed.</p>
 
     <figure class="shot">
-      <img src="../screenshots/tc-converting.png" width="1800" height="984" alt="A batch in progress: one file completed, one file with a progress bar, three files that wait">
-      <figcaption>A batch in progress. The current file shows a progress bar.</figcaption>
+      <img src="../screenshots/tc-converting.png" width="1800" height="1120" alt="A batch in progress: one file completed, one file failed with FFmpeg's message in red, one file with a progress bar, two files that wait">
+      <figcaption>A batch in progress. The current file shows a progress bar, and a failed file shows the cause.</figcaption>
     </figure>
 
     <h3>Row Status</h3>
@@ -704,10 +708,10 @@
         <tr><th>Status</th><th>Symbol</th><th>Meaning</th></tr>
       </thead>
       <tbody>
-        <tr><td>Waiting</td><td>Empty circle</td><td>Transcoder converts the file when you click the Convert button.</td></tr>
-        <tr><td>Converting</td><td>Progress indicator and progress bar</td><td>The progress bar shows the part of the file that is converted.</td></tr>
-        <tr><td>Completed</td><td>Green check mark</td><td>The row shows the name of the output file. To show the file in Finder, click the magnifier button.</td></tr>
-        <tr><td>Failed</td><td>Orange triangle</td><td>The row shows the cause, usually the last lines from FFmpeg. Transcoder deletes the incomplete output file.</td></tr>
+        <tr><td>Waiting</td><td>Grey dot</td><td>Transcoder converts the file when you click the Convert button.</td></tr>
+        <tr><td>Converting</td><td>Progress indicator and progress bar</td><td>The progress bar and the percentage show the part of the file that is converted.</td></tr>
+        <tr><td>Completed</td><td>Green check mark</td><td>The row shows the name of the output file. To show the file in Finder, click the <strong>Reveal</strong> button.</td></tr>
+        <tr><td>Failed</td><td>Red exclamation mark</td><td>The row shows the cause, usually the last lines from FFmpeg. To read all of the message, hold the pointer on it, or right-click the row and select <strong>Copy Error Message</strong>. Transcoder deletes the incomplete output file.</td></tr>
         <tr><td>Cancelled</td><td>Circle with a line</td><td>You clicked the Cancel button before or during the conversion of the file.</td></tr>
       </tbody>
     </table>
@@ -715,9 +719,10 @@
 
     <h3>Stop a Batch</h3>
     <ol>
-      <li>Click the <strong>Cancel</strong> button.</li>
+      <li>Click the <strong>Cancel</strong> button, or push <kbd>⌘</kbd><kbd>.</kbd>.</li>
     </ol>
     <p>Transcoder stops the current file and deletes its incomplete output file. The current file and all other files of the batch that wait change to <em>Cancelled</em>. Completed files do not change. Files that you added during the batch continue to wait.</p>
+    <p>If you quit Transcoder during a batch, Transcoder also stops the current file and deletes its incomplete output file.</p>
 
     <h3 id="convert-again">Convert a File Again</h3>
     <p>You can convert a completed, failed or cancelled file again, for example with a different format or different settings.</p>
@@ -794,7 +799,8 @@
       <tbody>
         <tr><td>The file has no audio.</td><td>The file has no audio stream. It is a video with no sound, or a file with an incorrect extension. Use a different source file.</td></tr>
         <tr><td>Could not read the file: …</td><td>ffprobe cannot open the file. The message shows the cause that ffprobe gives, for example <em>Invalid data found when processing input</em>: the file is damaged or incomplete, or FFmpeg cannot read its format. Use a different source file.</td></tr>
-        <tr><td>The output folder is not available: …</td><td>The folder in <strong>Save To</strong> does not exist now. Usually, it is on a drive that is disconnected. Connect the drive, or choose a different folder.</td></tr>
+        <tr><td>The output folder is not available: …</td><td>The folder in <strong>Output Folder</strong> does not exist now. Usually, it is on a drive that is disconnected. Connect the drive, or choose a different folder.</td></tr>
+        <tr><td>Transcoder cannot write to the output folder: …</td><td>The output folder is read-only, for example a folder on a disk image or a shared folder, or you do not have permission to write to it. When Transcoder writes beside the source file, this is the folder of the source file. Choose a different output folder, or change the permissions of the folder in Finder (<strong>File › Get Info</strong>).</td></tr>
         <tr><td>Too large for AIFF: …</td><td>The AIFF file would be larger than 4 GB, and an AIFF file cannot hold more. For example, 8 channels of 24-bit audio at 192 kHz reach 4 GB after 15½ minutes. Select WAV, FLAC or Apple Lossless, or a lower sample rate, bit depth or number of channels. Transcoder usually shows this message before it starts. If the source file does not give its length, Transcoder shows it after the conversion and deletes the output file.</td></tr>
         <tr><td>FFmpeg failed (exit …): …</td><td>The conversion failed. The message shows the last lines from FFmpeg. Usually, a part of the source file is damaged.</td></tr>
         <tr><td>FFmpeg finished but wrote no file.</td><td>Possibly the output folder moved or became read-only during the conversion. Make sure that the output folder exists and that you can write to it.</td></tr>

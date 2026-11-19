@@ -9,6 +9,8 @@ enum AppLauncher {
     static func main() {
         if isHostingTests {
             TestHostApp.main()
+        } else if Snapshot.directory(in: CommandLine.arguments) != nil {
+            SnapshotApp.main()
         } else {
             TranscoderApp.main()
         }
@@ -29,13 +31,24 @@ private struct TestHostApp: App {
 
 extension UserDefaults {
     /// Where the app keeps what it stores in defaults: its own domain, except in
-    /// a test run, where that would be the developer's real settings. A test run
-    /// gets a scratch suite named by a path in the temporary folder, which keeps
-    /// it out of ~/Library/Preferences. Nothing in the app names `.standard`.
-    nonisolated static let app: UserDefaults = AppLauncher.isHostingTests
-        ? UserDefaults(suiteName: FileManager.default.temporaryDirectory
-            .appendingPathComponent("io.github.sevmorris.Transcoder.tests").path)!
-        : .standard
+    /// a test run or a `--snapshot` run, where that would be the developer's
+    /// real settings. Those get a scratch suite named by a path in the
+    /// temporary folder, which keeps it out of ~/Library/Preferences. Nothing
+    /// in the app names `.standard`.
+    nonisolated static let app: UserDefaults = {
+        let scratch = AppLauncher.isHostingTests
+            ? FileManager.default.temporaryDirectory
+                .appendingPathComponent("io.github.sevmorris.Transcoder.tests").path
+            : snapshotSuitePath
+        return scratch.map { UserDefaults(suiteName: $0)! } ?? .standard
+    }()
+
+    /// The scratch suite of a `--snapshot` run, and nil in any other.
+    nonisolated static let snapshotSuitePath: String? =
+        !AppLauncher.isHostingTests && Snapshot.directory(in: CommandLine.arguments) != nil
+            ? FileManager.default.temporaryDirectory
+                .appendingPathComponent("io.github.sevmorris.Transcoder.snapshot").path
+            : nil
 }
 
 struct TranscoderApp: App {
@@ -49,9 +62,20 @@ struct TranscoderApp: App {
         Window("Transcoder", id: "main") {
             ContentView()
                 .environment(viewModel)
-                .frame(minWidth: 720, minHeight: 440)
+                .frame(minWidth: 740, minHeight: 480)
+                // As in WaxOnWaxOff and ClipHack: a quit during a batch stops
+                // FFmpeg, which would otherwise finish the file on its own.
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+                    viewModel.cancelForQuit()
+                }
         }
         .commands {
+            CommandGroup(after: .toolbar) {
+                Button(viewModel.showSettings ? "Hide Settings" : "Show Settings") {
+                    withAnimation { viewModel.showSettings.toggle() }
+                }
+                .keyboardShortcut("s", modifiers: [.command, .option])
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Add Files…") { viewModel.chooseInputs() }
                     .keyboardShortcut("o", modifiers: .command)

@@ -108,6 +108,37 @@ struct QueueTests {
         #expect(names(vm) == ["a.aiff", "b.m4a", "z.flac"])
     }
 
+    @Test("A folder's packages are passed over, but a package added by itself is looked into")
+    func skipsPackages() throws {
+        let s = try Scratch()
+        let vm = ContentViewModel(store: s.store, converter: FakeConverter())
+        try s.file("in/song.flac")
+        try s.file("in/Project.bundle/Media/take.wav")
+        vm.add([s.folder.appendingPathComponent("in")])
+        #expect(names(vm) == ["song.flac"])
+        vm.add([s.folder.appendingPathComponent("in/Project.bundle")])
+        #expect(names(vm) == ["song.flac", "take.wav"])
+    }
+
+    @Test("Dropped files are added in the order they were dropped")
+    func dropOrder() async throws {
+        let s = try Scratch()
+        let vm = ContentViewModel(store: s.store, converter: FakeConverter())
+        let files = try (1...12).map { try s.file("\($0).wav") }.reversed()
+        vm.add(files.map { NSItemProvider(object: $0 as NSURL) })
+        try await eventually { vm.items.count == 12 }
+        #expect(names(vm) == files.map(\.lastPathComponent))
+    }
+
+    @Test("Whether the settings pane is open is kept in the store")
+    func settingsPane() throws {
+        let s = try Scratch()
+        let vm = ContentViewModel(store: s.store, converter: FakeConverter())
+        #expect(vm.showSettings)
+        vm.showSettings = false
+        #expect(!ContentViewModel(store: s.store, converter: FakeConverter()).showSettings)
+    }
+
     @Test("The same file is queued once, however it is added")
     func duplicates() throws {
         let s = try Scratch()
@@ -165,6 +196,26 @@ struct QueueTests {
         await finish(vm)
         #expect(vm.items.map(\.status) == [.cancelled, .cancelled, .pending])
         #expect(await fake.inputs.count == 1)
+    }
+
+    @Test("Quitting during a batch cancels it and deletes the file being written")
+    func quitDuringBatch() async throws {
+        let s = try Scratch()
+        let fake = FakeConverter(open: false)
+        let vm = ContentViewModel(store: s.store, converter: fake)
+        vm.add([try s.file("a.wav"), try s.file("b.wav")])
+        vm.cancelForQuit()              // nothing running: nothing happens
+        #expect(vm.items.allSatisfy { $0.status == .pending })
+
+        vm.start()
+        try await eventually { await fake.inputs.count == 1 }
+        let partial = try #require(vm.currentOutput)
+        FileManager.default.createFile(atPath: partial.path, contents: Data("partial".utf8))
+        vm.cancelForQuit()
+        #expect(!FileManager.default.fileExists(atPath: partial.path))
+        await finish(vm)
+        #expect(vm.items.map(\.status) == [.cancelled, .cancelled])
+        #expect(vm.currentOutput == nil)
     }
 
     // MARK: Finished rows

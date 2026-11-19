@@ -9,16 +9,24 @@ final class ContentViewModel {
     var isRunning = false
     var showHelp = false
     var errorMessage: String?
+    /// Whether the settings pane is open. Kept with the other settings, in
+    /// `store`, so a test run never writes it to the real domain.
+    var showSettings: Bool { didSet { store.set(showSettings, forKey: Self.showSettingsKey) } }
+    static let showSettingsKey = "ShowSettings"
 
     private let store: UserDefaults
     private let converter: any Converting
     /// The running batch. Internal so the tests can await its end.
     private(set) var batch: Task<Void, Never>?
+    /// The file FFmpeg is writing now, so a quit can delete it: the
+    /// converter's own clean-up after a cancel runs too late for that.
+    private(set) var currentOutput: URL?
 
     init(store: UserDefaults = .app, converter: any Converting = Converter()) {
         self.store = store
         self.converter = converter
         self.settings = TranscoderSettings.load(from: store)
+        self.showSettings = store.object(forKey: Self.showSettingsKey) as? Bool ?? true
     }
 
     var preset: Preset {
@@ -74,10 +82,33 @@ final class ContentViewModel {
             + extraExtensions.sorted().compactMap { UTType(filenameExtension: $0) }
     }
 
+    /// Packages are passed over: a Photos library, a GarageBand or Logic
+    /// project, or an app holds media of its own that nobody dropping the
+    /// folder around it means to convert. A package dropped by itself is
+    /// still looked into.
     private static func mediaFiles(in folder: URL) -> [URL] {
         let walker = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil,
-                                                     options: [.skipsHiddenFiles])
+                                                     options: [.skipsHiddenFiles, .skipsPackageDescendants])
         return (walker?.allObjects as? [URL] ?? []).filter(isMedia).sorted { $0.path < $1.path }
+    }
+
+    /// Adds what was dropped on the window, in the order it was dropped. Each
+    /// provider answers on its own queue, in no fixed order, so they are
+    /// awaited one by one and added together.
+    func add(_ providers: [NSItemProvider]) {
+        Task {
+            var urls: [URL] = []
+            for provider in providers {
+                if let url = await Self.fileURL(from: provider) { urls.append(url) }
+            }
+            add(urls)
+        }
+    }
+
+    private nonisolated static func fileURL(from provider: NSItemProvider) async -> URL? {
+        await withCheckedContinuation { continuation in
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in continuation.resume(returning: url) }
+        }
     }
 
     /// No row leaves the queue during a batch: the batch holds the rows it
@@ -132,10 +163,23 @@ final class ContentViewModel {
 
     func cancel() { batch?.cancel() }
 
+    /// Called as the app quits. Cancelling terminates FFmpeg at once, since
+    /// cancellation handlers run synchronously; without it FFmpeg outlives the
+    /// app and finishes the file on its own. The file it was writing is
+    /// deleted here, because the app is gone before the converter's clean-up
+    /// would run.
+    func cancelForQuit() {
+        guard isRunning else { return }
+        batch?.cancel()
+        if let currentOutput { try? FileManager.default.removeItem(at: currentOutput) }
+    }
+
     private func convert(_ item: QueueItem, format: OutputFormat, preset: Preset, folder: URL?) async {
         let destination = folder ?? item.source.deletingLastPathComponent()
         let output = ArgumentBuilder.uniqueOutputURL(for: item.source, format: format, in: destination)
         item.status = .converting(0)
+        currentOutput = output
+        defer { currentOutput = nil }
         do {
             try await converter.convert(input: item.source, output: output, format: format, preset: preset) { fraction in
                 Task { @MainActor in
@@ -154,6 +198,12 @@ final class ContentViewModel {
 
     func reveal(_ item: QueueItem) {
         if let url = item.outputURL { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+    }
+
+    func copyFailure(_ item: QueueItem) {
+        guard case .failed(let message) = item.status else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(message, forType: .string)
     }
 
     func revealAll() {

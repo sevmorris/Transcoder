@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/tc-done.png" width="720" alt="Transcoder after a batch: five files converted to MP3, each with a Reveal in Finder button, beside the Output and Save To settings" />
+  <img src="docs/screenshots/tc-done.png" width="720" alt="Transcoder after a batch: five files converted to MP3, each with a Reveal button, beside the settings pane" />
 </p>
 
 A macOS app that converts audio: drop files in, pick a format, convert. Audio only — from a video file it takes the first audio track and writes nothing else.
@@ -37,6 +37,20 @@ xcodebuild -project Transcoder.xcodeproj -scheme Transcoder test
 ```
 
 The tests include an end-to-end conversion of a tagged sample with cover art to every format, run through the bundled FFmpeg in a temporary folder. A test run never touches the app's real settings: hosting tests, the app starts with no window, and `UserDefaults.app` is a scratch suite.
+
+### Screenshots
+
+The pictures in `docs/screenshots/` come from the app itself:
+
+```bash
+xcodebuild -project Transcoder.xcodeproj -scheme Transcoder -configuration Release -destination 'generic/platform=macOS' -derivedDataPath build
+```
+
+```bash
+build/Build/Products/Release/Transcoder.app/Contents/MacOS/Transcoder --snapshot docs/screenshots
+```
+
+It opens the window in dark mode, fills the queue with made-up rows for each state (waiting, converting, completed, failed), sets the format each picture needs, captures the window with `screencapture -l`, and quits. Nothing is converted. The settings go to a scratch suite, not the app's real settings. The run needs a 2x display, and Screen Recording permission for the app you start it from, such as Terminal. Leave the keyboard and mouse alone while it runs: the window must stay the active window, or the run stops and says so. If the window's size or layout changes, check the `width` and `height` of each picture in `docs/manual/index.html`. The list of shots is in `Transcoder/Snapshot.swift`.
 
 ## Licence
 

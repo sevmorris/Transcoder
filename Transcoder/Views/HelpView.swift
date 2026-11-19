@@ -1,23 +1,63 @@
 import SwiftUI
 
+/// A short summary of how to use Transcoder, in the sibling apps' Help shape:
+/// a title, then one headed section to a subject. The manual has the rest.
 struct HelpView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Transcoder Help").font(.title2.bold())
-            Group {
-                Text("Drop audio files, video files or folders into the window, or choose Add Files. Pick an output format and its settings on the right, then Convert (⌘↩).")
-                Text("Only audio is written. From a video file Transcoder takes the first audio track.")
-                Text("Each format remembers its own bitrate, sample rate, channels and bit depth. \"Same as source\" keeps what the file already has.")
-                Text("Tags and cover art come across. WAV and Opus keep the tags but have no place FFmpeg can put a cover.")
-                Text("Outputs go beside each source unless you choose a folder. Nothing is overwritten: a name already taken gets a number.")
-                Text("To convert a finished file again, right-click its row and choose Convert Again, or use the Convert Again button for every finished row. Then click Convert.")
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Transcoder Help")
+                        .font(.largeTitle.bold())
+
+                    section("Getting Started",
+                            "Drag audio files, video files or folders onto the window, or click Add Files (⌘O). Select the output format and its settings in the settings pane. Then click Convert (⌘↩).")
+                    section("Audio Only",
+                            "Transcoder writes only audio. From a video file, it writes the first audio track.")
+                    section("Format Settings",
+                            "Each format keeps its own bitrate, bit depth, sample rate and channels. \"Same as source\" keeps the value of the source file. Reset to Defaults sets the values of the selected format again.")
+                    section("Tags & Cover Art",
+                            "Transcoder copies the tags and the cover art. WAV and Opus keep the tags, but FFmpeg has no location for a cover in them.")
+                    section("Output Folder",
+                            "Transcoder writes each output file beside its source file. To use one folder for all output files, click Choose… or drop a folder on the Output Folder section. Click Reset to write beside each source file again. Transcoder does not write over a file: a name already taken gets a number.")
+                    section("The Queue",
+                            "Transcoder converts the waiting rows one at a time, from the top. Cancel (⌘.) stops the batch and deletes the incomplete file. If a conversion fails, the row shows the cause. Hold the pointer on the message to read all of it, or right-click the row and select Copy Error Message.")
+                    section("Convert Again",
+                            "To convert a finished file again, right-click its row and select Convert Again. To do this for all finished rows, click Convert Again in the toolbar. Then click Convert.")
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Manual").font(.headline)
+                        Link("sevmorris.github.io/Transcoder/manual",
+                             destination: URL(string: "https://sevmorris.github.io/Transcoder/manual/")!)
+                    }
+                }
+                .padding(28)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .fixedSize(horizontal: false, vertical: true)
-            HStack { Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.defaultAction) }
+
+            Divider()
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+            .padding(12)
         }
-        .padding(24)
-        .frame(width: 460)
+        .frame(width: 480, height: 560)
     }
+
+    private func section(_ title: String, _ body: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.headline)
+            Text(body)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+#Preview {
+    HelpView()
 }
