@@ -2,9 +2,9 @@
 ### Audio Converter for macOS
 
 <p align="center">
-  <strong>Version:</strong> 0.1.2
+  <strong>Version:</strong> 0.2.0
   <br />
-  <a href="https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-v0.1.2.dmg"><strong>Download Latest (DMG)</strong></a>
+  <a href="https://github.com/sevmorris/Transcoder/releases/latest/download/Transcoder-v0.2.0.dmg"><strong>Download Latest (DMG)</strong></a>
   ·
   <a href="https://sevmorris.github.io/Transcoder/manual/">Manual</a>
   ·
